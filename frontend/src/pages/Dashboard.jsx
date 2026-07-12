@@ -237,20 +237,6 @@ const Dashboard = () => {
       .slice(0, 2);
   };
 
-  const getRelativeTime = (timestamp) => {
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now - then;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
-  };
-
   const getRoleBadgeColor = (role) => {
     const colors = {
       Admin: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
