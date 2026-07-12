@@ -289,7 +289,7 @@ const Assets = () => {
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
                   selectedCategories.length > 0
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                    ? getStatusColor('Medium')
                     : 'bg-[#17171C] border-[#2A2A32] text-gray-400 hover:text-white'
                 }`}
               >
@@ -329,7 +329,7 @@ const Assets = () => {
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
                   selectedStatuses.length > 0
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                    ? getStatusColor('Medium')
                     : 'bg-[#17171C] border-[#2A2A32] text-gray-400 hover:text-white'
                 }`}
               >
@@ -371,7 +371,7 @@ const Assets = () => {
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
                   selectedDepartments.length > 0
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                    ? getStatusColor('Medium')
                     : 'bg-[#17171C] border-[#2A2A32] text-gray-400 hover:text-white'
                 }`}
               >
@@ -439,7 +439,7 @@ const Assets = () => {
                       <td className="px-6 py-4 text-gray-300">{asset.name}</td>
                       <td className="px-6 py-4 text-gray-300">{asset.category}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-block px-2 py-1 text-xs rounded border ${getStatusColor(asset.status)}`}>
+                        <span className={`inline-block px-2 py-1 text-xs rounded border ${getStatusColorClass(asset.status)}`}>
                           {asset.status}
                         </span>
                       </td>
