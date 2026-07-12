@@ -42,8 +42,8 @@ class User(Base, TimestampMixin):
     # Relationships
     department = relationship("Department", back_populates="users", foreign_keys=[department_id])
     allocations = relationship("Allocation", back_populates="user", foreign_keys="Allocation.user_id")
-    bookings = relationship("Booking", back_populates="user")
-    maintenance_requests = relationship("MaintenanceRequest", back_populates="requester")
+    bookings = relationship("Booking", back_populates="user", foreign_keys="[Booking.user_id]")
+    maintenance_requests = relationship("MaintenanceRequest", back_populates="requester", foreign_keys="[MaintenanceRequest.raised_by]")
     notifications = relationship("Notification", back_populates="user")
     
     def __repr__(self):

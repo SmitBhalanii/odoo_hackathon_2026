@@ -61,9 +61,9 @@ class Allocation(Base, TimestampMixin):
     # Relationships
     asset = relationship("Asset", back_populates="allocations")
     user = relationship("User", back_populates="allocations", foreign_keys=[user_id])
-    allocated_by = relationship("User", foreign_keys=[allocated_by_id])
-    approved_by = relationship("User", foreign_keys=[approved_by_id])
-    transfer_from_user = relationship("User", foreign_keys=[transfer_from_user_id])
+    allocated_by = relationship("User", foreign_keys=[allocated_by_id], backref="allocations_created")
+    approved_by = relationship("User", foreign_keys=[approved_by_id], backref="allocations_approved")
+    transfer_from_user = relationship("User", foreign_keys=[transfer_from_user_id], backref="allocations_transferred_from")
     
     def __repr__(self):
         return f"<Allocation(id={self.id}, asset_id={self.asset_id}, user_id={self.user_id}, status={self.status})>"

@@ -67,7 +67,7 @@ class MaintenanceRequest(Base, TimestampMixin):
     # Relationships
     asset = relationship("Asset", back_populates="maintenance_requests")
     requester = relationship("User", back_populates="maintenance_requests", foreign_keys=[raised_by])
-    approver = relationship("User", foreign_keys=[approved_by])
+    approver = relationship("User", foreign_keys=[approved_by], backref="approved_maintenance_requests")
     
     def __repr__(self):
         return f"<MaintenanceRequest(id={self.id}, asset_id={self.asset_id}, status={self.status})>"

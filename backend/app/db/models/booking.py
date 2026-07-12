@@ -45,8 +45,8 @@ class Booking(Base, TimestampMixin):
     
     # Relationships
     asset = relationship("Asset", back_populates="bookings")
-    user = relationship("User", back_populates="bookings")
-    approved_by = relationship("User", foreign_keys=[approved_by_id])
+    user = relationship("User", back_populates="bookings", foreign_keys=[user_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_id], backref="approved_bookings")
     
     def __repr__(self):
         return f"<Booking(id={self.id}, asset_id={self.asset_id}, user_id={self.user_id}, status={self.status})>"

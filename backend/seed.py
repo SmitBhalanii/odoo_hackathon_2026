@@ -385,12 +385,12 @@ def seed_database():
         for maint_data in maintenance_requests:
             maintenance = models.MaintenanceRequest(
                 asset_id=maint_data["asset"].id,
-                requester_id=maint_data["requester"].id,
+                raised_by=maint_data["requester"].id,
                 issue_description=maint_data["issue_description"],
                 priority=maint_data["priority"],
                 status=maint_data["status"],
                 scheduled_date=maint_data.get("scheduled_date"),
-                approved_by_id=user_objects[1].id
+                approved_by=user_objects[1].id
             )
             db.add(maintenance)
         
