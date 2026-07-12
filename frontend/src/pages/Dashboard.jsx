@@ -17,6 +17,8 @@ import {
   LogOut
 } from 'lucide-react';
 import { NotificationDropdown } from './Notifications';
+import { PageWrapper, ContentArea, CardSkeleton } from '../components/SharedComponents';
+import { getStatusColor, CARD_STYLES, BUTTON_STYLES, SPACING } from '../utils/constants';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -239,10 +241,10 @@ const Dashboard = () => {
 
   const getRoleBadgeColor = (role) => {
     const colors = {
-      Admin: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-      'Asset Manager': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      'Department Head': 'bg-green-500/20 text-green-300 border-green-500/30',
-      Employee: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+      Admin: getStatusColor('Critical'),
+      'Asset Manager': getStatusColor('Medium'), 
+      'Department Head': getStatusColor('Available'),
+      Employee: getStatusColor('Low')
     };
     return colors[role] || colors.Employee;
   };
@@ -297,11 +299,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] flex">
+    <PageWrapper>
       {/* Sidebar */}
       <aside className="w-[260px] bg-[#17171C] border-r border-[#2A2A32] flex flex-col">
         {/* Logo */}
-        <div className="p-6 border-b border-[#2A2A32]">
+        <div className={`p-${SPACING.sm} border-b border-[#2A2A32]`}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <span className="text-white text-sm font-bold">AF</span>
@@ -311,7 +313,7 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className={`flex-1 p-${SPACING.xs} space-y-1`}>
           {navItems.map((item) => {
             // Hide Organization Setup if not admin
             if (item.adminOnly && user.role !== 'Admin') {
@@ -325,7 +327,7 @@ const Dashboard = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 ${
                   isActive
                     ? 'bg-blue-500/20 text-blue-300'
                     : 'text-gray-400 hover:text-white hover:bg-[#1F1F24]'
@@ -339,8 +341,8 @@ const Dashboard = () => {
         </nav>
 
         {/* User Profile at Bottom */}
-        <div className="p-4 border-t border-[#2A2A32]">
-          <div className="flex items-center gap-3 mb-3">
+        <div className={`p-${SPACING.xs} border-t border-[#2A2A32]`}>
+          <div className={`flex items-center gap-3 mb-3`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <span className="text-white text-sm font-semibold">{getInitials(user.name)}</span>
             </div>
@@ -351,7 +353,7 @@ const Dashboard = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#1F1F24] hover:bg-[#252529] text-gray-300 hover:text-white rounded-lg transition text-sm"
+            className={`w-full flex items-center justify-center gap-2 px-3 py-2 ${BUTTON_STYLES.ghost} text-sm`}
           >
             <LogOut size={16} />
             <span>Logout</span>
@@ -362,7 +364,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="bg-[#17171C] border-b border-[#2A2A32] px-8 py-4">
+        <header className={`bg-[#17171C] border-b border-[#2A2A32] px-${SPACING.md} py-${SPACING.xs}`}>
           <div className="flex items-center justify-end gap-4">
             {/* User Avatar with Role */}
             <div className="flex items-center gap-3">
@@ -381,7 +383,7 @@ const Dashboard = () => {
             <div className="relative notification-dropdown-container">
               <button
                 onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-                className="relative p-2 bg-[#1F1F24] hover:bg-[#252529] rounded-lg transition"
+                className={`relative p-2 ${BUTTON_STYLES.ghost}`}
               >
                 <Bell size={20} className="text-gray-400" />
                 {unreadNotifications > 0 && (
@@ -393,7 +395,7 @@ const Dashboard = () => {
 
               {/* Notification Dropdown */}
               {showNotificationDropdown && (
-                <div className="absolute right-0 top-full mt-2 bg-[#17171C] border border-[#2A2A32] rounded-lg shadow-2xl z-50">
+                <div className={`absolute right-0 top-full mt-2 ${CARD_STYLES.modal} z-50`}>
                   <NotificationDropdown
                     notifications={notifications}
                     onMarkAsRead={markNotificationAsRead}
@@ -406,31 +408,24 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-8">
-          {/* Page Heading */}
-          <h1 className="text-3xl font-bold text-white mb-8">Today's Overview</h1>
-
+        <ContentArea 
+          title="Today's Overview"
+        >
           {/* KPI Cards Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-[#17171C] border border-[#2A2A32] rounded-lg p-6 animate-pulse">
-                  <div className="h-4 bg-[#2A2A32] rounded w-24 mb-4"></div>
-                  <div className="h-8 bg-[#2A2A32] rounded w-16"></div>
-                </div>
-              ))}
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-${SPACING.sm} mb-${SPACING.md}`}>
+              <CardSkeleton count={6} />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-${SPACING.sm} mb-${SPACING.md}`}>
               {kpiCards.map((card, index) => {
                 const Icon = card.icon;
                 return (
                   <div
                     key={index}
-                    className="bg-[#17171C] border border-[#2A2A32] rounded-lg p-6 hover:border-[#3A3A42] transition"
+                    className={`${CARD_STYLES.base} ${CARD_STYLES.hover} p-${SPACING.sm}`}
                   >
-                    <div className="flex items-start justify-between mb-4">
+                    <div className={`flex items-start justify-between mb-${SPACING.xs}`}>
                       <span className="text-xs uppercase text-gray-400 font-medium tracking-wide">
                         {card.label}
                       </span>
@@ -449,7 +444,7 @@ const Dashboard = () => {
           {overdueCount > 0 && (
             <div
               onClick={() => navigate('/allocation?filter=overdue')}
-              className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/30 rounded-lg p-4 mb-8 cursor-pointer hover:border-red-500/50 transition"
+              className={`bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/30 rounded-lg p-${SPACING.xs} mb-${SPACING.md} cursor-pointer hover:border-red-500/50 transition-colors duration-200`}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-500/20 rounded-lg">
@@ -466,24 +461,24 @@ const Dashboard = () => {
           )}
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap gap-4 mb-8">
+          <div className={`flex flex-wrap gap-${SPACING.xs} mb-${SPACING.md}`}>
             <button
               onClick={() => navigate('/assets/register')}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+              className={`flex items-center gap-2 px-${SPACING.sm} py-3 ${BUTTON_STYLES.primary}`}
             >
               <Plus size={20} />
               Register Asset
             </button>
             <button
               onClick={() => navigate('/booking/new')}
-              className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-[#2A2A32] hover:border-blue-500 text-gray-300 hover:text-white font-medium rounded-lg transition"
+              className={`flex items-center gap-2 px-${SPACING.sm} py-3 ${BUTTON_STYLES.secondary}`}
             >
               <Calendar size={20} />
               Book Resource
             </button>
             <button
               onClick={() => navigate('/maintenance/new')}
-              className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-[#2A2A32] hover:border-blue-500 text-gray-300 hover:text-white font-medium rounded-lg transition"
+              className={`flex items-center gap-2 px-${SPACING.sm} py-3 ${BUTTON_STYLES.secondary}`}
             >
               <Wrench size={20} />
               Raise Maintenance Request
@@ -491,11 +486,11 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-[#17171C] border border-[#2A2A32] rounded-lg">
-            <div className="px-6 py-4 border-b border-[#2A2A32]">
+          <div className={CARD_STYLES.base}>
+            <div className={`px-${SPACING.sm} py-${SPACING.xs} border-b border-[#2A2A32]`}>
               <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
             </div>
-            <div className="p-6">
+            <div className={`p-${SPACING.sm}`}>
               {loading ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
@@ -534,9 +529,9 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-        </div>
+        </ContentArea>
       </main>
-    </div>
+    </PageWrapper>
   );
 };
 
