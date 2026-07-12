@@ -1,4 +1,22 @@
-"""Asset model - core asset tracking entity."""
+"""Asset model - core asset tracking entity.
+
+⚠️  CRITICAL WARNING - ASSET STATUS STATE MACHINE:
+================================================================================
+NEVER set asset.status directly anywhere in the codebase!
+
+ALL status changes MUST go through asset_service.transition_asset_status()
+which enforces the valid state transitions and logs all changes.
+
+This includes:
+- Allocation module (Available → Allocated)
+- Booking module (Available → Reserved)
+- Maintenance module (any status → Under Maintenance)
+- Audit module (any status transitions during audits)
+
+Direct status assignment bypasses validation and audit logging.
+Use: asset_service.transition_asset_status(db, asset, new_status, actor)
+================================================================================
+"""
 
 from sqlalchemy import Column, Integer, String, Text, Float, Date, Boolean, JSON, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import relationship

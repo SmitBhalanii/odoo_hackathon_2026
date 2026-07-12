@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .core.config import settings
-from .core.errors import NotFoundError, ConflictError, PermissionError as AppPermissionError
+from .core.errors import NotFoundError, ConflictError, PermissionError as AppPermissionError, ValidationError
 from .db.session import init_db
 from .routers import auth, users, assets, allocations, bookings, maintenance
 
@@ -65,6 +65,15 @@ async def permission_exception_handler(request: Request, exc: AppPermissionError
     """Handle PermissionError exceptions with 403 response."""
     return JSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
+        content={"detail": exc.message}
+    )
+
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    """Handle ValidationError exceptions with 422 response."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.message}
     )
 
