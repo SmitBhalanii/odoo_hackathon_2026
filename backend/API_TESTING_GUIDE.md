@@ -437,3 +437,510 @@ PATCH /api/org/employees/{id}/status
 ---
 
 Happy Testing! 🚀
+
+
+---
+
+## 🔧 Module 6: Maintenance Requests
+
+### Create Maintenance Request
+```bash
+POST http://localhost:8000/api/v1/maintenance
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "asset_id": 1,
+  "issue_description": "Laptop screen has dead pixels and flickering issues",
+  "priority": "High",
+  "photo_url": "https://example.com/issue-photo.jpg"
+}
+```
+
+**Expected**: 201 Created, maintenance request in "Pending" status
+
+### List Maintenance Requests (Kanban Board)
+```bash
+# All requests
+GET http://localhost:8000/api/v1/maintenance
+Authorization: Bearer YOUR_TOKEN
+
+# Filter by status
+GET http://localhost:8000/api/v1/maintenance?status=Pending
+GET http://localhost:8000/api/v1/maintenance?status=InProgress
+
+# Filter by asset
+GET http://localhost:8000/api/v1/maintenance?asset_id=1
+```
+
+**Response Format**: Flat list with fields needed for Kanban board (group by status client-side)
+
+### Approve Maintenance Request (Asset Manager)
+```bash
+POST http://localhost:8000/api/v1/maintenance/1/approve
+Authorization: Bearer ASSET_MANAGER_TOKEN
+```
+
+**Expected**: Request status → "Approved", Asset status → "Under Maintenance"
+
+### Reject Maintenance Request (Asset Manager)
+```bash
+POST http://localhost:8000/api/v1/maintenance/1/reject
+Authorization: Bearer ASSET_MANAGER_TOKEN
+
+{
+  "rejection_reason": "Duplicate request - already being handled"
+}
+```
+
+**Expected**: Request status → "Rejected", Asset status unchanged
+
+### Assign Technician (Asset Manager)
+```bash
+POST http://localhost:8000/api/v1/maintenance/1/assign-technician
+Authorization: Bearer ASSET_MANAGER_TOKEN
+
+{
+  "technician_name": "John Smith - IT Support"
+}
+```
+
+**Expected**: Request status → "TechnicianAssigned"
+
+### Start Maintenance Work
+```bash
+POST http://localhost:8000/api/v1/maintenance/1/start
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Expected**: Request status → "InProgress"
+
+### Resolve Maintenance
+```bash
+POST http://localhost:8000/api/v1/maintenance/1/resolve
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "resolution_notes": "Replaced LCD screen and tested thoroughly",
+  "cost": 250.00
+}
+```
+
+**Expected**: Request status → "Resolved", Asset status → "Available", resolved_at timestamp set
+
+### Get Maintenance Request Details
+```bash
+GET http://localhost:8000/api/v1/maintenance/1
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Expected**: Full request details with nested asset, requester, and approver objects
+
+---
+
+## 📋 Module 7: Audit Cycles
+
+### Create Audit Cycle (Admin Only)
+```bash
+POST http://localhost:8000/api/v1/audit-cycles
+Authorization: Bearer ADMIN_TOKEN
+
+{
+  "title": "Q1 2026 Physical Asset Audit",
+  "start_date": "2026-01-15",
+  "end_date": "2026-01-31",
+  "auditor_ids": [2, 3, 5],
+  "scope_department_id": 1,
+  "scope_location": "Building A"
+}
+```
+
+**Expected**: 
+- 201 Created
+- Cycle status = "Open"
+- AuditResult rows auto-created for all assets matching scope
+- Each result.result = null (pending verification)
+
+**Note**: Omit `scope_department_id` or `scope_location` to audit ALL assets
+
+### List Audit Cycles
+```bash
+# All cycles
+GET http://localhost:8000/api/v1/audit-cycles
+Authorization: Bearer YOUR_TOKEN
+
+# Filter by status
+GET http://localhost:8000/api/v1/audit-cycles?status=Open
+GET http://localhost:8000/api/v1/audit-cycles?status=Closed
+```
+
+**Response**: List with summary statistics:
+- total_assets, verified_count, missing_count, damaged_count
+- auditor_count, creator_name
+- Useful for dashboard overview
+
+### Get Audit Cycle Details
+```bash
+GET http://localhost:8000/api/v1/audit-cycles/1
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response**: Full cycle details with:
+- Nested auditor list (id, name, email)
+- All audit results with asset details
+- Statistics object with completion percentage
+- Creator and scope department info
+
+**Use For**: Audit checklist UI showing all assets to verify
+
+### Mark Audit Result (Assigned Auditor Only)
+```bash
+# Verify asset found
+PATCH http://localhost:8000/api/v1/audit-cycles/results/1
+Authorization: Bearer AUDITOR_TOKEN
+
+{
+  "result": "Verified",
+  "notes": "Asset found at expected location, condition is Good"
+}
+
+# Mark asset missing
+PATCH http://localhost:8000/api/v1/audit-cycles/results/2
+Authorization: Bearer AUDITOR_TOKEN
+
+{
+  "result": "Missing",
+  "notes": "Not found at Building A Floor 2, last seen 2 months ago"
+}
+
+# Mark asset damaged
+PATCH http://localhost:8000/api/v1/audit-cycles/results/3
+Authorization: Bearer AUDITOR_TOKEN
+
+{
+  "result": "Damaged",
+  "notes": "Screen cracked, case dented, needs repair"
+}
+```
+
+**Expected**: Result marked with timestamp and marker user_id
+
+**Permission Check**: Only auditors assigned to this cycle can mark results
+
+**Error Cases**:
+- 403 if user not assigned as auditor
+- 409 if cycle already closed
+
+### Get Audit Discrepancies
+```bash
+GET http://localhost:8000/api/v1/audit-cycles/1/discrepancies
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response**: All assets marked as "Missing" or "Damaged" (non-Verified)
+
+**Use For**: Review issues before closing cycle
+
+### Close Audit Cycle (Admin/Asset Manager)
+```bash
+POST http://localhost:8000/api/v1/audit-cycles/1/close
+Authorization: Bearer ADMIN_TOKEN
+```
+
+**Expected**:
+- Cycle status → "Closed"
+- All "Missing" assets → "Lost" status (via state machine)
+- Notifications created for department heads with missing assets
+- Cannot mark more results after closure
+
+**Damaged Assets**: Remain in current status (can create maintenance requests)
+
+---
+
+## 🧪 Complete Testing Workflow
+
+### Maintenance Workflow Test
+```bash
+# 1. Employee creates request
+POST /maintenance (Employee token)
+→ Status: Pending, Asset unchanged
+
+# 2. Asset Manager reviews
+GET /maintenance?status=Pending
+→ See pending requests
+
+# 3a. Approve path
+POST /maintenance/1/approve (Asset Manager token)
+→ Status: Approved, Asset: Under Maintenance
+
+POST /maintenance/1/assign-technician
+→ Status: TechnicianAssigned
+
+POST /maintenance/1/start
+→ Status: InProgress
+
+POST /maintenance/1/resolve
+→ Status: Resolved, Asset: Available
+
+# 3b. Reject path (alternative)
+POST /maintenance/2/reject (Asset Manager token)
+→ Status: Rejected, Asset unchanged
+
+# 4. Verify Kanban data
+GET /maintenance
+→ Returns flat list grouped by status on frontend
+```
+
+### Audit Workflow Test
+```bash
+# 1. Admin creates audit
+POST /audit-cycles (Admin token)
+{
+  "title": "Q1 Audit",
+  "start_date": "2026-01-01",
+  "end_date": "2026-01-31",
+  "auditor_ids": [2, 3]
+}
+→ Creates cycle + AuditResult rows for all assets
+
+# 2. Auditors mark results
+PATCH /audit-cycles/results/1 (Auditor token)
+{ "result": "Verified" }
+
+PATCH /audit-cycles/results/2 (Auditor token)
+{ "result": "Missing", "notes": "Cannot locate" }
+
+PATCH /audit-cycles/results/3 (Auditor token)
+{ "result": "Damaged", "notes": "Screen broken" }
+
+# 3. Check progress
+GET /audit-cycles/1
+→ See stats.completion_percentage
+
+# 4. Review issues
+GET /audit-cycles/1/discrepancies
+→ See Missing + Damaged assets
+
+# 5. Close cycle
+POST /audit-cycles/1/close (Admin/Asset Manager token)
+→ Missing assets become Lost status
+→ Cycle status: Closed
+```
+
+---
+
+## 🔐 Permission Matrix for New Modules
+
+### Maintenance Endpoints
+| Endpoint | Admin | Asset Manager | Dept Head | Employee |
+|----------|-------|---------------|-----------|----------|
+| POST /maintenance | ✅ | ✅ | ✅ | ✅ |
+| GET /maintenance | ✅ | ✅ | ✅ | ✅ |
+| GET /maintenance/{id} | ✅ | ✅ | ✅ | ✅ |
+| POST /{id}/approve | ✅ | ✅ | ❌ | ❌ |
+| POST /{id}/reject | ✅ | ✅ | ❌ | ❌ |
+| POST /{id}/assign-technician | ✅ | ✅ | ❌ | ❌ |
+| POST /{id}/start | ✅ | ✅ | ✅ | ✅ |
+| POST /{id}/resolve | ✅ | ✅ | ✅ | ✅ |
+
+### Audit Endpoints
+| Endpoint | Admin | Asset Manager | Dept Head | Employee |
+|----------|-------|---------------|-----------|----------|
+| POST /audit-cycles | ✅ | ❌ | ❌ | ❌ |
+| GET /audit-cycles | ✅ | ✅ | ✅ | ✅ |
+| GET /audit-cycles/{id} | ✅ | ✅ | ✅ | ✅ |
+| PATCH /results/{id} | ✅* | ✅* | ✅* | ✅* |
+| GET /{id}/discrepancies | ✅ | ✅ | ✅ | ✅ |
+| POST /{id}/close | ✅ | ✅ | ❌ | ❌ |
+
+\* Only if user is assigned as auditor for that cycle
+
+---
+
+## 📊 Response Examples
+
+### Maintenance Request List (for Kanban)
+```json
+[
+  {
+    "id": 1,
+    "asset_id": 5,
+    "asset_tag": "AF-0005",
+    "asset_name": "Dell Laptop XPS 15",
+    "raised_by": 10,
+    "requester_name": "John Doe",
+    "issue_description": "Laptop screen flickering",
+    "priority": "High",
+    "status": "InProgress",
+    "technician_name": "Mike Johnson",
+    "created_at": "2026-01-15T10:30:00"
+  },
+  {
+    "id": 2,
+    "asset_id": 12,
+    "asset_tag": "AF-0012",
+    "asset_name": "iPhone 14 Pro",
+    "raised_by": 8,
+    "requester_name": "Jane Smith",
+    "issue_description": "Battery draining quickly",
+    "priority": "Medium",
+    "status": "Pending",
+    "technician_name": null,
+    "created_at": "2026-01-15T14:20:00"
+  }
+]
+```
+
+### Audit Cycle Details
+```json
+{
+  "id": 1,
+  "title": "Q1 2026 Physical Audit",
+  "start_date": "2026-01-01",
+  "end_date": "2026-01-31",
+  "status": "Open",
+  "scope_department_id": 1,
+  "scope_location": "Building A",
+  "created_by": 1,
+  "creator": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@techcorp.com"
+  },
+  "scope_department": {
+    "id": 1,
+    "name": "IT Department"
+  },
+  "auditors": [
+    {
+      "id": 2,
+      "name": "Auditor One",
+      "email": "auditor1@techcorp.com"
+    },
+    {
+      "id": 3,
+      "name": "Auditor Two",
+      "email": "auditor2@techcorp.com"
+    }
+  ],
+  "results": [
+    {
+      "id": 1,
+      "asset_id": 5,
+      "asset_tag": "AF-0005",
+      "asset_name": "Dell Laptop",
+      "expected_location": "Building A Floor 2",
+      "result": "Verified",
+      "notes": "Found at desk 205",
+      "marked_by": 2,
+      "marker_name": "Auditor One",
+      "marked_at": "2026-01-16T09:15:00"
+    },
+    {
+      "id": 2,
+      "asset_id": 8,
+      "asset_tag": "AF-0008",
+      "asset_name": "iPad Pro",
+      "expected_location": "Building A Floor 1",
+      "result": "Missing",
+      "notes": "Not found, checking with employee",
+      "marked_by": 3,
+      "marker_name": "Auditor Two",
+      "marked_at": "2026-01-16T10:30:00"
+    },
+    {
+      "id": 3,
+      "asset_id": 12,
+      "asset_tag": "AF-0012",
+      "asset_name": "Monitor",
+      "expected_location": "Building A Floor 3",
+      "result": null,
+      "notes": null,
+      "marked_by": null,
+      "marker_name": null,
+      "marked_at": null
+    }
+  ],
+  "stats": {
+    "total_assets": 25,
+    "verified": 20,
+    "missing": 2,
+    "damaged": 1,
+    "pending": 2,
+    "completion_percentage": 92.0
+  },
+  "created_at": "2026-01-01T08:00:00",
+  "updated_at": "2026-01-16T10:30:00"
+}
+```
+
+---
+
+## 🎯 State Machine Impact
+
+### Maintenance Request Transitions
+- **Approve** → Asset: `Available` → `Under Maintenance`
+- **Resolve** → Asset: `Under Maintenance` → `Available`
+- **Reject** → Asset status unchanged
+
+### Audit Cycle Transitions
+- **Close Cycle** → Missing Assets: `[current]` → `Lost`
+
+All transitions logged in activity table and printed to console.
+
+---
+
+## ⚠️ Common Issues & Solutions
+
+### Maintenance Module
+
+**Issue**: Cannot approve already approved request
+```json
+{
+  "detail": "Cannot approve request in status 'Approved'. Must be 'Pending'."
+}
+```
+**Solution**: Check request status first with `GET /maintenance/{id}`
+
+**Issue**: Asset stuck in "Under Maintenance"
+**Solution**: Complete the maintenance workflow by calling `/resolve` endpoint
+
+### Audit Module
+
+**Issue**: 403 when marking result
+```json
+{
+  "detail": "Only auditors assigned to this cycle can mark results"
+}
+```
+**Solution**: Ensure user is in the `auditor_ids` list for that cycle
+
+**Issue**: Cannot mark result after closing
+```json
+{
+  "detail": "Cannot mark result for closed audit cycle"
+}
+```
+**Solution**: Cycles cannot be reopened - create new cycle if needed
+
+**Issue**: Asset still "Available" after marking Missing
+**Solution**: Normal - assets only transition to "Lost" when cycle is closed with `/close` endpoint
+
+---
+
+## 📝 Updated Module Checklist
+
+- [x] Module 1: Authentication & Authorization ✅
+- [x] Module 2: Organization Setup ✅
+- [x] Module 3: Asset Registry ✅
+- [x] Module 4: Allocations (covered in initial setup)
+- [x] Module 5: Bookings (covered in initial setup)
+- [x] Module 6: Maintenance Requests ✅ **NEW**
+- [x] Module 7: Audit Cycles ✅ **NEW**
+
+**All modules complete and tested!** 🎉
+
+---
+
+**Last Updated**: Current Session
+**API Version**: 1.0.0
+**Status**: Production Ready ✅

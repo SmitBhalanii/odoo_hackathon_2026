@@ -10,6 +10,7 @@ from .maintenance import MaintenanceRequest
 from .audit_log import AuditLog
 from .notification import Notification
 from .activity import Activity
+from .audit import AuditCycle, AuditAssignment, AuditResult
 
 __all__ = [
     "User",
@@ -23,5 +24,8 @@ __all__ = [
     "MaintenanceRequest",
     "AuditLog",
     "Notification",
-    "Activity"
+    "Activity",
+    "AuditCycle",
+    "AuditAssignment",
+    "AuditResult"
 ]

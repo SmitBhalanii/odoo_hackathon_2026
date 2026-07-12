@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .core.errors import NotFoundError, ConflictError, PermissionError as AppPermissionError, ValidationError
 from .db.session import init_db
-from .routers import auth, users, assets, allocations, bookings, maintenance
+from .routers import auth, users, assets, allocations, bookings, maintenance, audit
 
 
 @asynccontextmanager
@@ -107,6 +107,7 @@ app.include_router(assets.router, prefix=settings.API_V1_PREFIX, tags=["Assets"]
 app.include_router(allocations.router, prefix=settings.API_V1_PREFIX, tags=["Allocations"])
 app.include_router(bookings.router, prefix=settings.API_V1_PREFIX, tags=["Bookings"])
 app.include_router(maintenance.router, prefix=settings.API_V1_PREFIX, tags=["Maintenance"])
+app.include_router(audit.router, prefix=settings.API_V1_PREFIX, tags=["Audit"])
 
 # Import org router
 from .routers import org
