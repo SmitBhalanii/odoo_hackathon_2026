@@ -10,6 +10,8 @@ import {
   Calendar as CalendarIcon
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { PageWrapper, ContentArea, TableSkeleton, EmptyStateNeutral } from '../components/SharedComponents';
+import { getStatusColor, CARD_STYLES, BUTTON_STYLES, SPACING } from '../utils/constants';
 
 const Assets = () => {
   const navigate = useNavigate();
@@ -47,13 +49,7 @@ const Assets = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const assetStatuses = [
-    { value: 'Available', color: 'bg-green-500/20 text-green-300 border-green-500/30' },
-    { value: 'Allocated', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    { value: 'Reserved', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-    { value: 'Under Maintenance', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-    { value: 'Lost', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
-    { value: 'Retired', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
-    { value: 'Disposed', color: 'bg-gray-700/20 text-gray-400 border-gray-700/30' }
+    'Available', 'Allocated', 'Reserved', 'Under Maintenance', 'Lost', 'Retired', 'Disposed'
   ];
 
   useEffect(() => {
@@ -122,9 +118,8 @@ const Assets = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const statusObj = assetStatuses.find(s => s.value === status);
-    return statusObj ? statusObj.color : 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status);
   };
 
   const toggleCategoryFilter = (category) => {
@@ -250,18 +245,26 @@ const Assets = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] flex">
+    <PageWrapper>
       <Sidebar user={user} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Asset Directory</h1>
-            <p className="text-gray-400">View and manage all organizational assets</p>
-          </div>
+        <ContentArea 
+          title="Asset Directory"
+          description="View and manage all organizational assets"
+          actions={
+            <button
+              onClick={() => setShowRegistrationPanel(true)}
+              className={`flex items-center gap-2 px-${SPACING.sm} py-2.5 ${BUTTON_STYLES.primary}`}
+            >
+              <Plus size={20} />
+              Register Asset
+            </button>
+          }
+        >
 
-          {/* Search and Register Button */}
-          <div className="flex gap-4 mb-6">
+          {/* Search Bar */}
+          <div className={`mb-${SPACING.sm}`}>
             <div className="flex-1 relative">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -272,17 +275,10 @@ const Assets = () => {
                 className="w-full pl-10 pr-4 py-2.5 bg-[#17171C] border border-[#2A2A32] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <button
-              onClick={() => setShowRegistrationPanel(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition whitespace-nowrap"
-            >
-              <Plus size={20} />
-              Register Asset
-            </button>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-3 mb-6">
+          <div className={`flex gap-3 mb-${SPACING.sm}`}>
             {/* Category Filter */}
             <div className="relative">
               <button
