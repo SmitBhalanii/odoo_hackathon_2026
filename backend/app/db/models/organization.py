@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
+import enum
 
 from ..base import Base, TimestampMixin
 
@@ -27,9 +28,16 @@ class Organization(Base, TimestampMixin):
         return f"<Organization(id={self.id}, name={self.name})>"
 
 
+class DepartmentStatus(str, enum.Enum):
+    """Department status enumeration."""
+    ACTIVE = "Active"
+    INACTIVE = "Inactive"
+
+
 class Department(Base, TimestampMixin):
     """
     Department model representing organizational departments.
+    Supports hierarchical structure with parent departments.
     """
     __tablename__ = "departments"
     
@@ -38,8 +46,14 @@ class Department(Base, TimestampMixin):
     description = Column(Text, nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
     
-    # Optional: Department head
+    # Department head
     head_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Hierarchical structure - parent department
+    parent_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+    
+    # Status
+    status = Column(String(50), nullable=False, default="Active")
     
     # Relationships
     organization = relationship("Organization", back_populates="departments")
@@ -47,8 +61,11 @@ class Department(Base, TimestampMixin):
     users = relationship("User", back_populates="department", foreign_keys="User.department_id")
     assets = relationship("Asset", back_populates="department")
     
+    # Self-referential relationship for parent department
+    parent = relationship("Department", remote_side=[id], foreign_keys=[parent_department_id])
+    
     def __repr__(self):
-        return f"<Department(id={self.id}, name={self.name})>"
+        return f"<Department(id={self.id}, name={self.name}, status={self.status})>"
 
 
 class Location(Base, TimestampMixin):

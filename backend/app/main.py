@@ -98,3 +98,7 @@ app.include_router(assets.router, prefix=settings.API_V1_PREFIX, tags=["Assets"]
 app.include_router(allocations.router, prefix=settings.API_V1_PREFIX, tags=["Allocations"])
 app.include_router(bookings.router, prefix=settings.API_V1_PREFIX, tags=["Bookings"])
 app.include_router(maintenance.router, prefix=settings.API_V1_PREFIX, tags=["Maintenance"])
+
+# Import org router
+from .routers import org
+app.include_router(org.router, prefix=settings.API_V1_PREFIX, tags=["Organization"])
