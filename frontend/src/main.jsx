@@ -9,6 +9,7 @@ import Assets from './pages/Assets'
 import AssetDetail from './pages/AssetDetail'
 import Allocation from './pages/Allocation'
 import Booking from './pages/Booking'
+import Maintenance from './pages/Maintenance'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -24,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/allocation" element={<Allocation />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/booking/new" element={<PlaceholderPage title="New Booking" description="Create a new resource booking." />} />
-        <Route path="/maintenance" element={<PlaceholderPage title="Maintenance" description="View and manage maintenance requests." />} />
+        <Route path="/maintenance" element={<Maintenance />} />
         <Route path="/maintenance/new" element={<PlaceholderPage title="New Maintenance Request" description="Submit a maintenance request." />} />
         <Route path="/audit" element={<PlaceholderPage title="Audit" description="Manage audit cycles." />} />
         <Route path="/reports" element={<PlaceholderPage title="Reports" description="View system reports and analytics." />} />
