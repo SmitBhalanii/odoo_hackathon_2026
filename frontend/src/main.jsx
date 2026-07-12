@@ -5,6 +5,8 @@ import './index.css'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import OrgSetup from './pages/OrgSetup'
+import Assets from './pages/Assets'
+import AssetDetail from './pages/AssetDetail'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -14,7 +16,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/organization" element={<OrgSetup />} />
-        <Route path="/assets" element={<PlaceholderPage title="Assets" description="View and manage all assets." />} />
+        <Route path="/assets" element={<Assets />} />
+        <Route path="/assets/:id" element={<AssetDetail />} />
         <Route path="/assets/register" element={<PlaceholderPage title="Register Asset" description="Add a new asset to the system." />} />
         <Route path="/allocation" element={<PlaceholderPage title="Allocation & Transfer" description="Manage asset allocations and transfer requests." />} />
         <Route path="/booking" element={<PlaceholderPage title="Resource Booking" description="Book shared resources." />} />
