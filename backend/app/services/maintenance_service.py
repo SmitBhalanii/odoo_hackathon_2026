@@ -7,6 +7,7 @@ from typing import Optional, List
 from ..db import models
 from ..core.errors import NotFoundError, ConflictError, ValidationError, PermissionError as AppPermissionError
 from .asset_service import AssetService
+from .notification_service import NotificationService, ActivityLogService
 
 
 class MaintenanceService:
@@ -126,16 +127,15 @@ class MaintenanceService:
         )
         
         # Create notification for requester
-        notification = models.Notification(
+        NotificationService.create_notification(
+            db=db,
             user_id=request.raised_by,
             type="maintenance_approved",
             title="Maintenance Request Approved",
             message=f"Your maintenance request for {request.asset.tag} has been approved.",
             resource_type="maintenance_request",
-            resource_id=request.id,
-            read=False
+            resource_id=request.id
         )
-        db.add(notification)
         
         db.commit()
         db.refresh(request)
@@ -196,16 +196,15 @@ class MaintenanceService:
         if rejection_reason:
             message += f" Reason: {rejection_reason}"
         
-        notification = models.Notification(
+        NotificationService.create_notification(
+            db=db,
             user_id=request.raised_by,
             type="maintenance_approved",  # Using same type for simplicity
             title="Maintenance Request Rejected",
             message=message,
             resource_type="maintenance_request",
-            resource_id=request.id,
-            read=False
+            resource_id=request.id
         )
-        db.add(notification)
         
         db.commit()
         db.refresh(request)
@@ -374,16 +373,15 @@ class MaintenanceService:
         )
         
         # Create notification for requester
-        notification = models.Notification(
+        NotificationService.create_notification(
+            db=db,
             user_id=request.raised_by,
             type="maintenance_completed",
             title="Maintenance Completed",
             message=f"Maintenance for {request.asset.tag} has been completed.",
             resource_type="maintenance_request",
-            resource_id=request.id,
-            read=False
+            resource_id=request.id
         )
-        db.add(notification)
         
         db.commit()
         db.refresh(request)

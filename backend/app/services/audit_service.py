@@ -7,6 +7,7 @@ from typing import List, Optional
 from ..db import models
 from ..core.errors import NotFoundError, ConflictError, ValidationError, PermissionError as AppPermissionError
 from .asset_service import AssetService
+from .notification_service import NotificationService, ActivityLogService
 
 
 class AuditService:
@@ -309,16 +310,15 @@ class AuditService:
                     # Notify department head if exists
                     dept = result.asset.department
                     if dept and dept.head_user_id:
-                        notification = models.Notification(
+                        NotificationService.create_notification(
+                            db=db,
                             user_id=dept.head_user_id,
                             type="audit_discrepancy",
                             title="Asset Missing in Audit",
                             message=f"Asset {result.asset.tag} was marked as Missing in audit '{cycle.title}'.",
                             resource_type="audit_cycle",
-                            resource_id=cycle.id,
-                            read=False
+                            resource_id=cycle.id
                         )
-                        db.add(notification)
             
             elif result.result == "Damaged":
                 damaged_count += 1

@@ -156,18 +156,14 @@ class AssetService:
         db.refresh(asset)
         
         # Log activity for audit trail
-        description = f"Asset {asset.tag} status changed: {old_status} → {new_status}"
-        if notes:
-            description += f" | Notes: {notes}"
-        
-        activity = models.Activity(
-            user_id=actor.id,
+        ActivityLogService.log_activity(
+            db=db,
+            actor=actor,
             action="asset_status_change",
-            description=description,
-            resource_type="asset",
-            resource_id=asset.id
+            entity_type="Asset",
+            entity_id=asset.id,
+            detail=f"Asset {asset.tag} status changed: {old_status} → {new_status}" + (f" | {notes}" if notes else "")
         )
-        db.add(activity)
         db.commit()
         
         print(f"\n{'='*60}")
