@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import OrgSetup from './pages/OrgSetup'
 import Assets from './pages/Assets'
 import AssetDetail from './pages/AssetDetail'
+import Allocation from './pages/Allocation'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -19,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/assets" element={<Assets />} />
         <Route path="/assets/:id" element={<AssetDetail />} />
         <Route path="/assets/register" element={<PlaceholderPage title="Register Asset" description="Add a new asset to the system." />} />
-        <Route path="/allocation" element={<PlaceholderPage title="Allocation & Transfer" description="Manage asset allocations and transfer requests." />} />
+        <Route path="/allocation" element={<Allocation />} />
         <Route path="/booking" element={<PlaceholderPage title="Resource Booking" description="Book shared resources." />} />
         <Route path="/booking/new" element={<PlaceholderPage title="New Booking" description="Create a new resource booking." />} />
         <Route path="/maintenance" element={<PlaceholderPage title="Maintenance" description="View and manage maintenance requests." />} />
