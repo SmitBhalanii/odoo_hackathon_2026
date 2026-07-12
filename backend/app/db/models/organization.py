@@ -57,8 +57,8 @@ class Department(Base, TimestampMixin):
     
     # Relationships
     organization = relationship("Organization", back_populates="departments")
-    head = relationship("User", foreign_keys=[head_user_id])
-    users = relationship("User", back_populates="department", foreign_keys="User.department_id")
+    head = relationship("User", foreign_keys=[head_user_id], backref="headed_department")
+    users = relationship("User", back_populates="department", foreign_keys="[User.department_id]")
     assets = relationship("Asset", back_populates="department")
     
     # Self-referential relationship for parent department

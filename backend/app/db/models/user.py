@@ -40,7 +40,7 @@ class User(Base, TimestampMixin):
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     
     # Relationships
-    department = relationship("Department", back_populates="users")
+    department = relationship("Department", back_populates="users", foreign_keys=[department_id])
     allocations = relationship("Allocation", back_populates="user", foreign_keys="Allocation.user_id")
     bookings = relationship("Booking", back_populates="user")
     maintenance_requests = relationship("MaintenanceRequest", back_populates="requester")
