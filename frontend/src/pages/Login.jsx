@@ -42,7 +42,7 @@ const Login = () => {
         const mockToken = 'mock-jwt-token-' + Date.now();
         const mockUser = {
           id: 1,
-          name: 'Abhay Bapodara',
+          name: 'Smit Bhalani',
           email: loginData.email,
           role: 'Admin', // Can be changed to test different roles
           department: 'IT'
@@ -73,7 +73,7 @@ const Login = () => {
       const mockToken = 'mock-jwt-token-' + Date.now();
       const mockUser = {
         id: 1,
-        name: 'Abhay Bapodara',
+        name: 'Smit Bhalani',
         email: loginData.email,
         role: 'Admin',
         department: 'IT'

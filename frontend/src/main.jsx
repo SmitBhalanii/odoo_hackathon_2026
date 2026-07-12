@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import OrgSetup from './pages/OrgSetup'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -12,7 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/organization" element={<PlaceholderPage title="Organization Setup" description="Manage departments and organizational structure." />} />
+        <Route path="/organization" element={<OrgSetup />} />
         <Route path="/assets" element={<PlaceholderPage title="Assets" description="View and manage all assets." />} />
         <Route path="/assets/register" element={<PlaceholderPage title="Register Asset" description="Add a new asset to the system." />} />
         <Route path="/allocation" element={<PlaceholderPage title="Allocation & Transfer" description="Manage asset allocations and transfer requests." />} />
