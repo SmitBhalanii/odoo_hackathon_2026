@@ -9,6 +9,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { getNotifications, markAsRead, markAllAsRead } from '../api/notifications';
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -51,17 +52,13 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/notifications', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const result = await response.json();
+      const response = await getNotifications();
       
-      if (result.data) {
-        setNotifications(result.data.items || []);
+      if (response.data.data) {
+        setNotifications(response.data.data.items || []);
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error('Failed to fetch notifications:', error.response?.data?.detail || error.message);
       // Mock data representing server-side generated notifications
       setNotifications([
         {
@@ -155,19 +152,16 @@ const Notifications = () => {
     return `${diffInDays}d ago`;
   };
 
-  const markAsRead = async (notificationId) => {
+  const handleMarkAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/notifications/${notificationId}/mark-read`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await markAsRead(notificationId);
 
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, read: true } : n
       ));
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+      console.error('Failed to mark as read:', error.response?.data?.detail || error.message);
+      // Optimistically update UI
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, read: true } : n
       ));
@@ -285,7 +279,7 @@ const Notifications = () => {
                       notification={notification}
                       type={type}
                       IconComponent={IconComponent}
-                      onMarkAsRead={markAsRead}
+                      onMarkAsRead={handleMarkAsRead}
                       getRelativeTime={getRelativeTime}
                     />
                   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login as apiLogin, signup as apiSignup } from '../api/auth';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -30,58 +31,17 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData)
-      });
+      const response = await apiLogin(loginData.email, loginData.password);
       
-      // If backend is not ready, simulate login with mock data for development
-      if (!response.ok && response.status === 404) {
-        // Mock login for development
-        const mockToken = 'mock-jwt-token-' + Date.now();
-        const mockUser = {
-          id: 1,
-          name: 'Smit Bhalani',
-          email: loginData.email,
-          role: 'Admin', // Can be changed to test different roles
-          department: 'IT'
-        };
-        
-        localStorage.setItem('authToken', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        navigate('/dashboard');
-        return;
-      }
-      
-      const result = await response.json();
-      
-      if (result.error) {
-        alert(result.error.message);
-        return;
-      }
-      
-      // Store JWT token
-      localStorage.setItem('authToken', result.data.token);
-      localStorage.setItem('user', JSON.stringify(result.data.user));
+      // Store JWT token and user data
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      // Mock login as fallback for development
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      const mockUser = {
-        id: 1,
-        name: 'Smit Bhalani',
-        email: loginData.email,
-        role: 'Admin',
-        department: 'IT'
-      };
-      
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      navigate('/dashboard');
+      alert(error.response?.data?.detail || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -99,24 +59,12 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: signupData.name,
-          email: signupData.email,
-          department: signupData.department,
-          password: signupData.password
-          // Note: No role field - always creates Employee role
-        })
+      await apiSignup({
+        name: signupData.name,
+        email: signupData.email,
+        department_id: signupData.department, // Will be converted to department ID in backend
+        password: signupData.password
       });
-      
-      const result = await response.json();
-      
-      if (result.error) {
-        alert(result.error.message);
-        return;
-      }
       
       // Show success toast and switch to login
       alert('Account created successfully! Please log in.');
@@ -130,7 +78,8 @@ const Login = () => {
         confirmPassword: ''
       });
     } catch (error) {
-      alert('Signup failed. Please try again.');
+      console.error('Signup error:', error);
+      alert(error.response?.data?.detail || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }

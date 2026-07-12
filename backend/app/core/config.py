@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "AssetFlow"
     DEBUG: bool = True
-    API_V1_PREFIX: str = "/api"
+    API_V1_PREFIX: str = ""  # No prefix - flat RESTful routes
     
     # Security
     SECRET_KEY: str

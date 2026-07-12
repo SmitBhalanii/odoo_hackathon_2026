@@ -12,6 +12,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { getAssets } from '../api/assets';
+import { getBookings, createBooking, cancelBooking } from '../api/bookings';
 
 const Booking = () => {
   const navigate = useNavigate();
@@ -58,27 +60,21 @@ const Booking = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-
       // Fetch bookable assets
-      const assetsResponse = await fetch('/api/assets?bookable=true', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const assetsResult = await assetsResponse.json();
-      if (assetsResult.data) setBookableAssets(assetsResult.data.items || []);
+      const assetsResponse = await getAssets({ bookable: true });
+      if (assetsResponse.data.data) setBookableAssets(assetsResponse.data.data.items || []);
 
       // Fetch bookings for selected resource and date
       if (selectedResourceId && selectedDate) {
-        const bookingsResponse = await fetch(
-          `/api/bookings?resource_id=${selectedResourceId}&date=${selectedDate}`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-        const bookingsResult = await bookingsResponse.json();
-        if (bookingsResult.data) setBookings(bookingsResult.data.items || []);
+        const bookingsResponse = await getBookings({
+          resource_id: selectedResourceId,
+          date: selectedDate
+        });
+        if (bookingsResponse.data.data) setBookings(bookingsResponse.data.data.items || []);
       }
 
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch data:', error.response?.data?.detail || error.message);
       // Mock data for development
       setBookableAssets([
         { id: 1, tag: 'AF-0201', name: 'Conference Room A', is_bookable: true },
@@ -222,60 +218,43 @@ const Booking = () => {
     }
 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          resource_id: selectedResourceId,
-          start_time: `${selectedDate}T${bookingForm.startTime}`,
-          end_time: `${selectedDate}T${bookingForm.endTime}`,
-          purpose: bookingForm.purpose
-        })
+      const response = await createBooking({
+        resource_id: selectedResourceId,
+        start_time: `${selectedDate}T${bookingForm.startTime}`,
+        end_time: `${selectedDate}T${bookingForm.endTime}`,
+        purpose: bookingForm.purpose
       });
 
-      const result = await response.json();
-      
-      if (!result.error) {
+      if (response.data) {
         showSuccessToast('Booking confirmed successfully!');
         setShowBookingModal(false);
         resetBookingForm();
         fetchData();
-      } else if (result.error.code === 'BOOKING_OVERLAP') {
+      }
+    } catch (error) {
+      console.error('Booking failed:', error.response?.data?.detail || error.message);
+      if (error.response?.data?.code === 'BOOKING_OVERLAP') {
         setConflictError({
-          message: result.error.message,
+          message: error.response.data.detail,
           timeRange: formatTimeRange(
             `${selectedDate}T${bookingForm.startTime}`,
             `${selectedDate}T${bookingForm.endTime}`
           )
         });
+      } else {
+        showSuccessToast(error.response?.data?.detail || 'Booking failed');
       }
-    } catch (error) {
-      console.error('Booking failed:', error);
-      showSuccessToast('Booking confirmed successfully! (Mock)');
-      setShowBookingModal(false);
-      resetBookingForm();
-      fetchData();
     }
   };
 
   const handleCancelBooking = async (bookingId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/bookings/${bookingId}/cancel`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
+      await cancelBooking(bookingId);
       showSuccessToast('Booking cancelled successfully!');
       fetchData();
     } catch (error) {
-      console.error('Cancellation failed:', error);
-      showSuccessToast('Booking cancelled successfully! (Mock)');
-      fetchData();
+      console.error('Cancellation failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Booking cancellation failed');
     }
   };
 

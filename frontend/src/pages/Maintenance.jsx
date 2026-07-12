@@ -15,6 +15,17 @@ import {
   Calendar
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { getAssets, transitionStatus } from '../api/assets';
+import { getEmployees } from '../api/employees';
+import { 
+  getMaintenanceRequests, 
+  createMaintenance, 
+  approveMaintenance, 
+  rejectMaintenance,
+  assignTechnician,
+  startMaintenance,
+  resolveMaintenance
+} from '../api/maintenance';
 
 const Maintenance = () => {
   const navigate = useNavigate();
@@ -72,31 +83,20 @@ const Maintenance = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-
       // Fetch maintenance requests
-      const requestsResponse = await fetch('/api/maintenance-requests', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const requestsResult = await requestsResponse.json();
-      if (requestsResult.data) setRequests(requestsResult.data.items || []);
+      const requestsResponse = await getMaintenanceRequests();
+      if (requestsResponse.data.data) setRequests(requestsResponse.data.data.items || []);
 
       // Fetch assets
-      const assetsResponse = await fetch('/api/assets', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const assetsResult = await assetsResponse.json();
-      if (assetsResult.data) setAssets(assetsResult.data.items || []);
+      const assetsResponse = await getAssets();
+      if (assetsResponse.data.data) setAssets(assetsResponse.data.data.items || []);
 
       // Fetch technicians
-      const techResponse = await fetch('/api/employees?role=Technician', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const techResult = await techResponse.json();
-      if (techResult.data) setTechnicians(techResult.data.items || []);
+      const techResponse = await getEmployees({ role: 'Technician' });
+      if (techResponse.data.data) setTechnicians(techResponse.data.data.items || []);
 
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch data:', error.response?.data?.detail || error.message);
       // Mock data for development
       setAssets([
         { id: 1, tag: 'AF-0001', name: 'MacBook Pro 16"', status: 'Allocated' },
@@ -179,137 +179,75 @@ const Maintenance = () => {
 
   const handleApprove = async (requestId) => {
     try {
-      const token = localStorage.getItem('authToken');
       const request = requests.find(r => r.id === requestId);
       
       // Update request stage
-      await fetch(`/api/maintenance-requests/${requestId}/approve`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await approveMaintenance(requestId);
 
       // Transition asset to Under Maintenance
-      await fetch(`/api/assets/${request.asset.id}/transition-status`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ new_status: 'Under Maintenance' })
-      });
+      await transitionStatus(request.asset.id, { new_status: 'Under Maintenance' });
 
       showSuccessToast(`${request.asset.tag} status: ${request.asset.status || 'Available'} → Under Maintenance`);
       fetchData();
     } catch (error) {
-      console.error('Approval failed:', error);
-      const request = requests.find(r => r.id === requestId);
-      showSuccessToast(`${request.asset.tag} status: ${request.asset.status || 'Available'} → Under Maintenance (Mock)`);
-      
-      // Mock update
-      setRequests(prev => prev.map(r => 
-        r.id === requestId ? { ...r, stage: 'approved' } : r
-      ));
+      console.error('Approval failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Approval failed');
     }
   };
 
   const handleReject = async (requestId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/maintenance-requests/${requestId}/reject`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      await rejectMaintenance(requestId);
       showSuccessToast('Request rejected');
       fetchData();
     } catch (error) {
-      console.error('Rejection failed:', error);
-      showSuccessToast('Request rejected (Mock)');
-      setRequests(prev => prev.filter(r => r.id !== requestId));
+      console.error('Rejection failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Rejection failed');
     }
   };
 
   const handleAssignTechnician = async (requestId, technicianId) => {
     try {
-      const token = localStorage.getItem('authToken');
       const technician = technicians.find(t => t.id === technicianId);
       
-      await fetch(`/api/maintenance-requests/${requestId}/assign-technician`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ technician_id: technicianId })
-      });
+      await assignTechnician(requestId, { technician_id: technicianId });
 
       showSuccessToast(`Technician ${technician.name} assigned`);
       setAssigningRequestId(null);
       setShowTechnicianDropdown(false);
       fetchData();
     } catch (error) {
-      console.error('Assignment failed:', error);
-      const technician = technicians.find(t => t.id === technicianId);
-      showSuccessToast(`Technician ${technician.name} assigned (Mock)`);
-      
-      setRequests(prev => prev.map(r => 
-        r.id === requestId ? { ...r, stage: 'technician_assigned', technician } : r
-      ));
-      setAssigningRequestId(null);
-      setShowTechnicianDropdown(false);
+      console.error('Assignment failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Assignment failed');
     }
   };
 
   const handleStartWork = async (requestId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/maintenance-requests/${requestId}/start`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      await startMaintenance(requestId);
       showSuccessToast('Work started');
       fetchData();
     } catch (error) {
-      console.error('Start failed:', error);
-      showSuccessToast('Work started (Mock)');
-      setRequests(prev => prev.map(r => 
-        r.id === requestId ? { ...r, stage: 'in_progress' } : r
-      ));
+      console.error('Start failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Start failed');
     }
   };
 
   const handleResolve = async (requestId) => {
     try {
-      const token = localStorage.getItem('authToken');
       const request = requests.find(r => r.id === requestId);
       
       // Update request stage
-      await fetch(`/api/maintenance-requests/${requestId}/resolve`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await resolveMaintenance(requestId);
 
       // Transition asset back to Available
-      await fetch(`/api/assets/${request.asset.id}/transition-status`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ new_status: 'Available' })
-      });
+      await transitionStatus(request.asset.id, { new_status: 'Available' });
 
       showSuccessToast(`${request.asset.tag} status: Under Maintenance → Available`);
       fetchData();
     } catch (error) {
-      console.error('Resolution failed:', error);
-      const request = requests.find(r => r.id === requestId);
-      showSuccessToast(`${request.asset.tag} status: Under Maintenance → Available (Mock)`);
-      
-      setRequests(prev => prev.map(r => 
-        r.id === requestId ? { ...r, stage: 'resolved', resolved_at: new Date().toISOString() } : r
-      ));
+      console.error('Resolution failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Resolution failed');
     }
   };
 
@@ -317,7 +255,6 @@ const Maintenance = () => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem('authToken');
       const formData = new FormData();
       
       formData.append('asset_id', requestForm.asset_id);
@@ -327,36 +264,17 @@ const Maintenance = () => {
         formData.append('photo', requestForm.photo);
       }
 
-      const response = await fetch('/api/maintenance-requests', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-
-      const result = await response.json();
+      const response = await createMaintenance(formData);
       
-      if (!result.error) {
+      if (response.data) {
         showSuccessToast('Maintenance request submitted!');
         setShowRequestModal(false);
         resetRequestForm();
         fetchData();
       }
     } catch (error) {
-      console.error('Request submission failed:', error);
-      showSuccessToast('Maintenance request submitted! (Mock)');
-      setShowRequestModal(false);
-      resetRequestForm();
-      
-      // Mock: add new request
-      const asset = assets.find(a => a.id === requestForm.asset_id);
-      setRequests(prev => [...prev, {
-        id: Date.now(),
-        asset: { id: asset.id, tag: asset.tag, name: asset.name },
-        issue_description: requestForm.issue_description,
-        priority: requestForm.priority,
-        stage: 'pending',
-        created_at: new Date().toISOString()
-      }]);
+      console.error('Request submission failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Request submission failed');
     }
   };
 

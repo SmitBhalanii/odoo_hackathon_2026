@@ -1,214 +1,160 @@
-# AssetFlow - Enterprise Asset & Resource Management System
+# AssetFlow - Enterprise Asset Management System
 
-An ERP module for tracking physical assets, managing bookings, maintenance workflows, and audit cycles.
+A comprehensive asset management system with FastAPI backend and React frontend, featuring role-based access control, asset lifecycle tracking, maintenance scheduling, and analytics.
 
-## 🎯 Project Overview
-
-AssetFlow helps organizations track:
-- **Physical Assets** (equipment, furniture, vehicles, shared spaces)
-- **Resource Bookings** with conflict prevention
-- **Maintenance Requests** with approval workflows
-- **Audit Cycles** for asset verification
-- **Role-based Access Control** (Admin, Asset Manager, Department Head, Employee)
-
-## 🏗️ Tech Stack
-
-### Backend
-- **FastAPI** - Modern Python web framework
-- **SQLAlchemy** - ORM for database operations
-- **SQLite** - Database
-- **Python 3.9+**
-
-### Frontend
-- **React 18+** - UI framework
-- **Vite** - Build tool
-- **TailwindCSS** - Styling
-- **React Router** - Navigation
-
-## 📁 Project Structure
-
-```
-assetflow-erp/
-├── backend/
-│   ├── app/
-│   │   ├── models/          # SQLAlchemy ORM models
-│   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── routers/         # FastAPI route handlers
-│   │   ├── services/        # Business logic layer
-│   │   └── core/            # Auth, config, dependencies
-│   └── main.py              # Application entry point
-├── frontend/
-│   ├── src/
-│   │   ├── pages/           # Page components
-│   │   ├── components/      # Reusable UI components
-│   │   ├── api/             # API client functions
-│   │   ├── context/         # React Context providers
-│   │   └── hooks/           # Custom React hooks
-│   └── package.json
-└── .kiro/
-    └── steering/            # Project guidelines & conventions
-```
-
-## 🚀 Getting Started
-
-### Quick Start (Recommended)
-
-#### Backend Setup (5 minutes)
-```bash
-cd backend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
-
-pip install -r requirements.txt
-python seed.py
-uvicorn app.main:app --reload
-```
-
-Backend runs at: **http://localhost:8000**
-- API Docs: http://localhost:8000/docs
-- Health Check: http://localhost:8000/health
-
-**Demo Login Credentials:**
-- Admin: `admin@techcorp.com` / `admin123`
-- Manager: `manager@techcorp.com` / `manager123`
-- Employee: `john.doe@techcorp.com` / `password123`
-
-#### Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs at: **http://localhost:5173**
-
-### Detailed Documentation
-
-- **Backend**: See `backend/README.md` for complete technical docs
-- **Quick Start**: See `backend/QUICKSTART.md` for 5-minute guide
-- **Setup Complete**: See `BACKEND_SETUP_COMPLETE.md` for architecture overview
+## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
-- Git
+- npm or yarn
 
-## 👥 Team
+### Backend Setup
 
-This project is built by a 3-person team for a hackathon:
-
-- **SmitBhalanii** - [smitbhalani147@gmail.com](mailto:smitbhalani147@gmail.com)
-- **shyamvachhani555** - [shyamvachhani555@gmail.com](mailto:shyamvachhani555@gmail.com)
-- **AbhayBapodara** - [abhaynbapodara@gmail.com](mailto:abhaynbapodara@gmail.com)
-
-## 🌿 Branch Strategy
-
-```
-main                              ← Production-ready code only
-├── feature/auth-org              ← Person A: Authentication & Organizations
-├── feature/assets-lifecycle      ← Person B: Asset management & state machine
-└── feature/booking-maintenance-audit  ← Person C: Bookings, maintenance, audits
+1. **Navigate to backend directory:**
+```powershell
+cd d:\AssetFlow\backend
 ```
 
-## 🔑 Core Features
-
-### Asset Lifecycle State Machine
-Assets have 7 states with enforced transitions:
-- Available → Allocated, Reserved, Under Maintenance, Lost
-- Allocated → Available, Under Maintenance, Lost, Retired
-- Reserved → Allocated, Available
-- Under Maintenance → Available, Lost, Retired
-- Lost → Available, Disposed
-- Retired → Disposed
-
-### Business Rules
-- ✅ **No Double-Allocation** - Assets can't be allocated to multiple users
-- ✅ **No Overlapping Bookings** - Boundary-exclusive interval checking
-- ✅ **Employee-Only Signup** - Admin assigns roles after signup
-- ✅ **Approval Workflows** - Maintenance & Audit require multi-step approval
-
-## 📝 API Response Format
-
-All API responses follow this structure:
-
-**Success:**
-```json
-{
-  "data": { /* response data */ },
-  "error": null
-}
+2. **Create and activate virtual environment:**
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
 ```
 
-**Error:**
-```json
-{
-  "data": null,
-  "error": {
-    "message": "Error description",
-    "code": "ERROR_CODE",
-    "details": {}
-  }
-}
+3. **Install dependencies:**
+```powershell
+pip install -r requirements.txt
 ```
 
-## 🎨 Design System
+4. **Create `.env` file** (copy from `.env.example` and update):
+```env
+SECRET_KEY=your-secret-key-here-min-32-chars
+DATABASE_URL=sqlite:///./assetflow.db
+FRONTEND_URL=http://localhost:5173
+```
 
-- **Background**: `#0F0F12` (deep charcoal)
-- **Card**: `#17171C` with `#2A2A32` border
-- **Primary Blue**: `#3B82F6` (Tailwind blue-600)
-- **Typography**: System fonts with Tailwind defaults
+5. **Initialize database with seed data:**
+```powershell
+python seed.py
+```
 
-## 📋 Current Progress
+6. **Start the backend server:**
+```powershell
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-### ✅ Completed
-- [x] Project structure setup
-- [x] Frontend UI (Dashboard, Assets, Bookings, etc.)
-- [x] Login/Signup screen with dark mode design
-- [x] Git repository initialized
-- [x] **Backend fully structured and documented**
-  - [x] FastAPI + SQLAlchemy 2.0 + SQLite setup
-  - [x] JWT authentication system
-  - [x] All 10+ database models
-  - [x] Role-based access control
-  - [x] Global exception handlers
-  - [x] Pagination support
-  - [x] CORS configuration
-  - [x] Timestamp mixin on all tables
-  - [x] Demo data seeding script
-  - [x] Comprehensive documentation
+Backend will be running at: **http://127.0.0.1:8000**
+- API Documentation: http://127.0.0.1:8000/docs
+- Health Check: http://127.0.0.1:8000/health
 
-### 🚧 In Progress
-- [ ] Complete CRUD endpoints for all entities
-- [ ] Asset lifecycle state machine implementation
-- [ ] Booking conflict detection
-- [ ] Maintenance approval workflows
-- [ ] Notification system
-- [ ] Activity logging
-- [ ] Frontend-backend integration
+### Frontend Setup
 
-### 📝 Planned
-- [ ] Audit cycle management
-- [ ] Report generation
-- [ ] File upload (asset photos)
-- [ ] QR code generation
-- [ ] Email notifications
-- [ ] Advanced search and filtering
+1. **Open a NEW terminal and navigate to frontend directory:**
+```powershell
+cd d:\AssetFlow\frontend
+```
 
-## 🛠️ Development Guidelines
+2. **Install dependencies:**
+```powershell
+npm install
+```
 
-See `.kiro/steering/` directory for detailed:
-- `product.md` - Business rules, roles, and requirements
-- `structure.md` - Code conventions and architecture patterns
+3. **Create `.env` file** (copy from `.env.example`):
+```env
+VITE_API_URL=http://127.0.0.1:8000
+```
 
-## 📄 License
+4. **Start the development server:**
+```powershell
+npm run dev
+```
 
-This is a hackathon project for demonstration purposes.
+Frontend will be running at: **http://localhost:5173**
+
+### Test Login Credentials
+
+After running `seed.py`, you can log in with:
+
+**System Admin:**
+- Email: `admin@assetflow.com`
+- Password: `admin123`
+- Role: Admin (full system access)
+
+**Asset Manager:**
+- Email: `manager@assetflow.com`  
+- Password: `manager123`
+- Role: AssetManager (manage assets, allocations, maintenance)
+
+**Department Head:**
+- Email: `head.it@assetflow.com`
+- Password: `head123`
+- Role: DepartmentHead (view department assets)
+
+**Employee:**
+- Email: `employee@assetflow.com`
+- Password: `employee123`
+- Role: Employee (view assigned assets)
+
+## 🏗️ Architecture
+
+### Backend (FastAPI)
+- **Framework:** FastAPI with SQLAlchemy ORM
+- **Database:** SQLite (easily swappable to PostgreSQL/MySQL)
+- **Authentication:** JWT-based with bcrypt password hashing
+- **API Structure:** RESTful with automatic OpenAPI docs
+
+### Frontend (React + Vite)
+- **Framework:** React 18 with Vite
+- **Routing:** React Router v6
+- **HTTP Client:** Axios with centralized API client
+- **Styling:** Tailwind CSS
+- **Charts:** Recharts for analytics
+
+## 📁 Key Features
+
+✅ **Asset Management** - Complete CRUD with lifecycle tracking  
+✅ **Allocation & Transfers** - Assign assets to employees/departments  
+✅ **Resource Booking** - Reserve bookable assets (rooms, equipment)  
+✅ **Maintenance Tracking** - Request, approve, and track maintenance  
+✅ **Audit Cycles** - Physical verification with discrepancy tracking  
+✅ **Dashboard & Analytics** - Real-time KPIs and reports  
+✅ **Notifications** - Activity tracking and alerts  
+✅ **Role-Based Access** - 4 roles with appropriate permissions  
+
+## 🔒 Security
+
+- Password hashing with bcrypt
+- JWT token authentication
+- Role-based access control (RBAC)
+- Department-scoped data access
+- CORS configuration
+- SQL injection protection via ORM
+
+## 📚 Documentation
+
+- **API Docs:** http://127.0.0.1:8000/docs (when backend is running)
+- **Connection Audit:** `BACKEND_FRONTEND_CONNECTION_AUDIT.md`
+- **API Client Setup:** `FRONTEND_API_CLIENT_COMPLETE.md`
+- **Module Docs:** See individual `*_COMPLETE.md` files
+
+## 🚨 Troubleshooting
+
+### Backend won't start
+- Ensure virtual environment is activated
+- Check all dependencies: `pip install -r requirements.txt`
+- Verify `.env` file exists with SECRET_KEY
+
+### Frontend can't connect
+- Verify backend is running at http://127.0.0.1:8000
+- Check HealthCheck indicator (green dot = connected)
+- Verify `.env` has correct VITE_API_URL
+
+### 401 Errors
+- Log out and log back in (token may have expired)
+- Clear browser localStorage
 
 ---
 
-Built with ❤️ for Odoo Hackathon 2026
+**Status:** ✅ Core functionality complete  
+**Last Updated:** 2026-07-12

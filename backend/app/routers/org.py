@@ -16,7 +16,10 @@ from ..schemas.common import PaginatedResponse
 from ..services.organization_service import OrganizationService
 from ..core.errors import NotFoundError
 
-router = APIRouter(prefix="/org")
+router = APIRouter(prefix="/departments")
+
+# Create separate employees router
+employees_router = APIRouter(prefix="/employees")
 
 
 # ============================================================================
@@ -179,7 +182,7 @@ def toggle_department_status(
 # ASSET CATEGORY ENDPOINTS
 # ============================================================================
 
-@router.get("/categories", response_model=List[CategoryResponse])
+@router.get("/asset-categories", response_model=List[CategoryResponse])
 def list_categories(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -193,7 +196,7 @@ def list_categories(
     return categories
 
 
-@router.post("/categories", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
+@router.post("/asset-categories", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
 def create_category(
     category: CategoryCreate,
     db: Session = Depends(get_db),
@@ -233,7 +236,7 @@ def create_category(
     return cat
 
 
-@router.put("/categories/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
+@router.put("/asset-categories/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
 def update_category(
     category_id: int,
     category: CategoryUpdate,
@@ -266,7 +269,7 @@ def update_category(
 # EMPLOYEE MANAGEMENT ENDPOINTS
 # ============================================================================
 
-@router.get("/employees", response_model=List[EmployeeListItem], dependencies=[Depends(require_admin)])
+@employees_router.get("", response_model=List[EmployeeListItem], dependencies=[Depends(require_admin)])
 def list_employees(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin)
@@ -296,7 +299,7 @@ def list_employees(
     return result
 
 
-@router.patch("/employees/{user_id}/role", response_model=UserResponse, dependencies=[Depends(require_admin)])
+@employees_router.patch("/{user_id}/role", response_model=UserResponse, dependencies=[Depends(require_admin)])
 def update_employee_role(
     user_id: int,
     role_update: UserRoleUpdate,
@@ -327,7 +330,7 @@ def update_employee_role(
     return user
 
 
-@router.patch("/employees/{user_id}/status", response_model=UserResponse, dependencies=[Depends(require_admin)])
+@employees_router.patch("/{user_id}/status", response_model=UserResponse, dependencies=[Depends(require_admin)])
 def update_employee_status(
     user_id: int,
     status_update: UserStatusUpdate,

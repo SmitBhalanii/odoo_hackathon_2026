@@ -31,10 +31,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
+# Configure CORS - allow both localhost and 127.0.0.1
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        settings.FRONTEND_URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -100,18 +106,20 @@ async def root():
     }
 
 
-# Register routers with API prefix
-app.include_router(auth.router, prefix=settings.API_V1_PREFIX, tags=["Authentication"])
-app.include_router(users.router, prefix=settings.API_V1_PREFIX, tags=["Users"])
-app.include_router(assets.router, prefix=settings.API_V1_PREFIX, tags=["Assets"])
-app.include_router(allocations.router, prefix=settings.API_V1_PREFIX, tags=["Allocations"])
-app.include_router(bookings.router, prefix=settings.API_V1_PREFIX, tags=["Bookings"])
-app.include_router(maintenance.router, prefix=settings.API_V1_PREFIX, tags=["Maintenance"])
-app.include_router(audit.router, prefix=settings.API_V1_PREFIX, tags=["Audit"])
-app.include_router(dashboard.router, prefix=settings.API_V1_PREFIX, tags=["Dashboard"])
-app.include_router(reports.router, prefix=settings.API_V1_PREFIX, tags=["Reports"])
-app.include_router(notifications.router, prefix=settings.API_V1_PREFIX, tags=["Notifications"])
+# Register routers - flat RESTful structure
+app.include_router(auth.router, tags=["Authentication"])
+app.include_router(users.router, tags=["Users"])
+app.include_router(assets.router, tags=["Assets"])
+app.include_router(allocations.router, tags=["Allocations"])
+app.include_router(allocations.transfers_router, tags=["Transfers"])  # Separate transfers router
+app.include_router(bookings.router, tags=["Bookings"])
+app.include_router(maintenance.router, tags=["Maintenance"])
+app.include_router(audit.router, tags=["Audit"])
+app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(reports.router, tags=["Reports"])
+app.include_router(notifications.router, tags=["Notifications"])
 
-# Import org router
+# Import org router (departments, categories, and employees)
 from .routers import org
-app.include_router(org.router, prefix=settings.API_V1_PREFIX, tags=["Organization"])
+app.include_router(org.router, tags=["Departments"])
+app.include_router(org.employees_router, tags=["Employees"])

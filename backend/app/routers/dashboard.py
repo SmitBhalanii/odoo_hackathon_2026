@@ -8,16 +8,16 @@ from ..db import models
 from ..services.dashboard_service import DashboardService
 from ..services.notification_service import NotificationService
 
-router = APIRouter(prefix="/dashboard")
+router = APIRouter(prefix="/dashboard/kpi")
 
 
-@router.get("/summary")
-def get_dashboard_summary(
+@router.get("")
+def get_dashboard_kpi(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """
-    Get dashboard summary with KPIs and recent activity.
+    Get dashboard KPIs.
     
     Returns aggregated metrics optimized for dashboard display:
     - **kpis**: Key performance indicators

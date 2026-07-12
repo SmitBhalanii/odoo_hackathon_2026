@@ -14,6 +14,11 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { getAssets } from '../api/assets';
+import { getEmployees } from '../api/employees';
+import { getDepartments } from '../api/departments';
+import { createAllocation } from '../api/allocations';
+import { getPendingTransfers, createTransfer, approveTransfer, rejectTransfer } from '../api/transfers';
 
 const Allocation = () => {
   const navigate = useNavigate();
@@ -60,38 +65,24 @@ const Allocation = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-
       // Fetch assets
-      const assetsResponse = await fetch('/api/assets', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const assetsResult = await assetsResponse.json();
-      if (assetsResult.data) setAssets(assetsResult.data.items || []);
+      const assetsResponse = await getAssets();
+      if (assetsResponse.data.data) setAssets(assetsResponse.data.data.items || []);
 
       // Fetch employees
-      const employeesResponse = await fetch('/api/employees', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const employeesResult = await employeesResponse.json();
-      if (employeesResult.data) setEmployees(employeesResult.data.items || []);
+      const employeesResponse = await getEmployees();
+      if (employeesResponse.data.data) setEmployees(employeesResponse.data.data.items || []);
 
       // Fetch departments
-      const deptResponse = await fetch('/api/departments', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const deptResult = await deptResponse.json();
-      if (deptResult.data) setDepartments(deptResult.data.items || []);
+      const deptResponse = await getDepartments();
+      if (deptResponse.data.data) setDepartments(deptResponse.data.data.items || []);
 
       // Fetch pending transfers
-      const transfersResponse = await fetch('/api/transfers/pending', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const transfersResult = await transfersResponse.json();
-      if (transfersResult.data) setPendingTransfers(transfersResult.data.items || []);
+      const transfersResponse = await getPendingTransfers();
+      if (transfersResponse.data.data) setPendingTransfers(transfersResponse.data.data.items || []);
 
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch data:', error.response?.data?.detail || error.message);
       // Mock data for development
       setAssets([
         { 
@@ -181,33 +172,21 @@ const Allocation = () => {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/allocations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          asset_id: selectedAssetId,
-          holder_type: holderType,
-          holder_id: selectedHolder.id,
-          expected_return_date: expectedReturnDate || null
-        })
+      const response = await createAllocation({
+        asset_id: selectedAssetId,
+        holder_type: holderType,
+        holder_id: selectedHolder.id,
+        expected_return_date: expectedReturnDate || null
       });
 
-      const result = await response.json();
-      
-      if (!result.error) {
+      if (response.data) {
         showSuccessToast('Asset allocated successfully!');
         fetchData();
         resetForm();
       }
     } catch (error) {
-      console.error('Allocation failed:', error);
-      showSuccessToast('Asset allocated successfully! (Mock)');
-      fetchData();
-      resetForm();
+      console.error('Allocation failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Asset allocation failed');
     }
   };
 
@@ -215,69 +194,45 @@ const Allocation = () => {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/transfers', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          asset_id: selectedAssetId,
-          from_holder_id: selectedAsset.current_holder.id,
-          from_holder_type: selectedAsset.current_holder.type,
-          to_holder_id: transferTo.id,
-          to_holder_type: holderType,
-          reason: transferReason
-        })
+      const response = await createTransfer({
+        asset_id: selectedAssetId,
+        from_holder_id: selectedAsset.current_holder.id,
+        from_holder_type: selectedAsset.current_holder.type,
+        to_holder_id: transferTo.id,
+        to_holder_type: holderType,
+        reason: transferReason
       });
 
-      const result = await response.json();
-      
-      if (!result.error) {
+      if (response.data) {
         showSuccessToast('Transfer request sent for approval!');
         fetchData();
         resetTransferForm();
       }
     } catch (error) {
-      console.error('Transfer request failed:', error);
-      showSuccessToast('Transfer request sent for approval! (Mock)');
-      fetchData();
-      resetTransferForm();
+      console.error('Transfer request failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Transfer request failed');
     }
   };
 
   const handleApproveTransfer = async (transferId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/transfers/${transferId}/approve`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
+      await approveTransfer(transferId);
       showSuccessToast('Transfer approved!');
       fetchData();
     } catch (error) {
-      console.error('Approval failed:', error);
-      showSuccessToast('Transfer approved! (Mock)');
-      fetchData();
+      console.error('Approval failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Transfer approval failed');
     }
   };
 
   const handleRejectTransfer = async (transferId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/transfers/${transferId}/reject`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
+      await rejectTransfer(transferId);
       showSuccessToast('Transfer rejected!');
       fetchData();
     } catch (error) {
-      console.error('Rejection failed:', error);
-      showSuccessToast('Transfer rejected! (Mock)');
-      fetchData();
+      console.error('Rejection failed:', error.response?.data?.detail || error.message);
+      showSuccessToast(error.response?.data?.detail || 'Transfer rejection failed');
     }
   };
 

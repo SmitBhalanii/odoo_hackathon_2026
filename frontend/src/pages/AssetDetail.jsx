@@ -11,6 +11,7 @@ import {
   Package
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { getAssetById, getAssetHistory } from '../api/assets';
 
 const AssetDetail = () => {
   const navigate = useNavigate();
@@ -47,31 +48,21 @@ const AssetDetail = () => {
   const fetchAssetDetails = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-
       // Fetch asset details
-      const assetResponse = await fetch(`/api/assets/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const assetResult = await assetResponse.json();
-      if (assetResult.data) setAsset(assetResult.data);
+      const assetResponse = await getAssetById(id);
+      if (assetResponse.data.data) setAsset(assetResponse.data.data);
 
       // Fetch allocation history
-      const allocationResponse = await fetch(`/api/assets/${id}/allocation-history`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const allocationResult = await allocationResponse.json();
-      if (allocationResult.data) setAllocationHistory(allocationResult.data.items || []);
+      const allocationResponse = await getAssetHistory(id);
+      if (allocationResponse.data.data) setAllocationHistory(allocationResponse.data.data.items || []);
 
       // Fetch maintenance history
-      const maintenanceResponse = await fetch(`/api/assets/${id}/maintenance-history`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const maintenanceResult = await maintenanceResponse.json();
-      if (maintenanceResult.data) setMaintenanceHistory(maintenanceResult.data.items || []);
+      // Note: The API structure might need to be verified for this endpoint
+      const maintenanceResponse = await getAssetHistory(id);
+      if (maintenanceResponse.data.data) setMaintenanceHistory(maintenanceResponse.data.data.items || []);
 
     } catch (error) {
-      console.error('Failed to fetch asset details:', error);
+      console.error('Failed to fetch asset details:', error.response?.data?.detail || error.message);
       // Mock data for development
       setAsset({
         id: id,

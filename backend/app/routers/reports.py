@@ -11,7 +11,7 @@ from ..core.deps import get_db, get_current_user
 from ..db import models
 from ..services.reports_service import ReportsService
 
-router = APIRouter(prefix="/reports")
+router = APIRouter(prefix="/analytics")
 
 
 @router.get("/utilization-by-department")
@@ -131,7 +131,7 @@ def get_idle_assets(
     return results
 
 
-@router.get("/due-for-maintenance-or-retirement")
+@router.get("/upcoming-maintenance-retirement")
 def get_due_for_maintenance_or_retirement(
     maintenance_interval_days: int = Query(
         180, 
@@ -271,3 +271,24 @@ def export_report(
             "Content-Disposition": f"attachment; filename={type}.csv"
         }
     )
+
+
+
+@router.get("/department-allocation-summary")
+def get_department_allocation_summary(
+    department_id: Optional[int] = Query(None, description="Filter by specific department"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get department allocation summary (same as utilization).
+    
+    Returns list of departments with allocation statistics.
+    Alias for /utilization-by-department for frontend compatibility.
+    """
+    results = ReportsService.get_utilization_by_department(
+        db=db,
+        department_id=department_id
+    )
+    
+    return results

@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import { NotificationDropdown } from './Notifications';
 import { PageWrapper, ContentArea, CardSkeleton } from '../components/SharedComponents';
+import HealthCheck from '../components/HealthCheck';
+import { getKPI, getRecentActivity } from '../api/dashboard';
+import { getUnreadCount, getNotifications, markAsRead } from '../api/notifications';
 import { getStatusColor, CARD_STYLES, BUTTON_STYLES, SPACING } from '../utils/constants';
 
 const Dashboard = () => {
@@ -85,66 +88,27 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      
       // Fetch KPI data
-      const kpiResponse = await fetch('/api/dashboard/kpi', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      // If backend is not available, use mock data
-      if (!kpiResponse.ok && kpiResponse.status === 404) {
-        // Use mock data for development
-        const { mockKpiData, mockRecentActivity, mockNotificationCount } = await import('../utils/mockApi.js');
-        setKpiData(mockKpiData.data);
-        setOverdueCount(mockKpiData.data.overdueReturns || 0);
-        setRecentActivity(mockRecentActivity.data.items || []);
-        setUnreadNotifications(mockNotificationCount.data.count || 0);
-        setLoading(false);
-        return;
-      }
-      
-      const kpiResult = await kpiResponse.json();
-      
+      const kpiResult = await getKPI();
       if (kpiResult.data) {
         setKpiData(kpiResult.data);
         setOverdueCount(kpiResult.data.overdueReturns || 0);
       }
 
       // Fetch recent activity
-      const activityResponse = await fetch('/api/dashboard/recent-activity?limit=6', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const activityResult = await activityResponse.json();
-      
+      const activityResult = await getRecentActivity(6);
       if (activityResult.data) {
         setRecentActivity(activityResult.data.items || []);
       }
 
-      // Fetch unread notifications count and recent notifications
-      const notifResponse = await fetch('/api/notifications/unread-count', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const notifResult = await notifResponse.json();
-      
+      // Fetch unread notifications count
+      const notifResult = await getUnreadCount();
       if (notifResult.data) {
         setUnreadNotifications(notifResult.data.count || 0);
       }
 
       // Fetch recent notifications for dropdown
-      const recentNotifResponse = await fetch('/api/notifications?limit=5', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const recentNotifResult = await recentNotifResponse.json();
-      
+      const recentNotifResult = await getNotifications({ limit: 5 });
       if (recentNotifResult.data) {
         setNotifications(recentNotifResult.data.items || []);
       }
@@ -208,11 +172,7 @@ const Dashboard = () => {
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/notifications/${notificationId}/mark-read`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await markAsRead(notificationId);
 
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, read: true } : n
@@ -222,6 +182,7 @@ const Dashboard = () => {
       setUnreadNotifications(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to mark as read:', error);
+      // Still update UI optimistically
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, read: true } : n
       ));
@@ -235,7 +196,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     navigate('/login');
   };
@@ -276,24 +237,8 @@ const Dashboard = () => {
 
   const handleExportData = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/export/dashboard-data', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `assetflow-data-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } else {
-        alert('Export feature will be available soon!');
-      }
+      // TODO: Implement export via API client when endpoint is available
+      alert('Export feature will be available soon!');
     } catch (error) {
       console.error('Export failed:', error);
       alert('Export feature will be available soon!');
@@ -435,9 +380,13 @@ const Dashboard = () => {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
         <header className={`bg-[#17171C] border-b border-[#2A2A32] px-${SPACING.md} py-${SPACING.xs}`}>
-          <div className="flex items-center justify-end gap-4">
-            {/* User Avatar with Role and Dropdown */}
-            <div className="relative admin-dropdown-container">
+          <div className="flex items-center justify-between gap-4">
+            {/* HealthCheck indicator on left */}
+            <HealthCheck />
+
+            {/* User Avatar with Role and Dropdown on right */}
+            <div className="flex items-center gap-4">
+              <div className="relative admin-dropdown-container">
               <button
                 onClick={() => setShowAdminDropdown(!showAdminDropdown)}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1F1F24] transition-colors duration-200"
@@ -562,6 +511,7 @@ const Dashboard = () => {
                   />
                 </div>
               )}
+            </div>
             </div>
           </div>
         </header>

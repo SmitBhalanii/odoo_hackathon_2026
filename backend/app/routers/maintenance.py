@@ -14,7 +14,7 @@ from ..schemas.maintenance import (
 from ..services.maintenance_service import MaintenanceService
 from ..core.errors import NotFoundError
 
-router = APIRouter(prefix="/maintenance")
+router = APIRouter(prefix="/maintenance-requests")
 
 
 # ============================================================================

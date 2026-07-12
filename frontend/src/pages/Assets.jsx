@@ -12,6 +12,9 @@ import {
 import Sidebar from '../components/Sidebar';
 import { PageWrapper, ContentArea, TableSkeleton, EmptyStateNeutral } from '../components/SharedComponents';
 import { getStatusColor, CARD_STYLES, BUTTON_STYLES, SPACING } from '../utils/constants';
+import { getAssets, createAsset } from '../api/assets';
+import { getCategories } from '../api/categories';
+import { getDepartments } from '../api/departments';
 
 const Assets = () => {
   const navigate = useNavigate();
@@ -73,31 +76,20 @@ const Assets = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-
       // Fetch assets
-      const assetsResponse = await fetch('/api/assets', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const assetsResult = await assetsResponse.json();
-      if (assetsResult.data) setAssets(assetsResult.data.items || []);
+      const assetsResponse = await getAssets();
+      if (assetsResponse.data.data) setAssets(assetsResponse.data.data.items || []);
 
       // Fetch categories
-      const categoriesResponse = await fetch('/api/asset-categories', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const categoriesResult = await categoriesResponse.json();
-      if (categoriesResult.data) setCategories(categoriesResult.data.items || []);
+      const categoriesResponse = await getCategories();
+      if (categoriesResponse.data.data) setCategories(categoriesResponse.data.data.items || []);
 
       // Fetch departments
-      const deptResponse = await fetch('/api/departments', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const deptResult = await deptResponse.json();
-      if (deptResult.data) setDepartments(deptResult.data.items || []);
+      const deptResponse = await getDepartments();
+      if (deptResponse.data.data) setDepartments(deptResponse.data.data.items || []);
 
     } catch (error) {
-      console.error('Failed to fetch assets:', error);
+      console.error('Failed to fetch assets:', error.response?.data?.detail || error.message);
       // Mock data for development
       setAssets([
         { id: 1, tag: 'AF-0001', name: 'MacBook Pro 16"', category: 'Laptops', status: 'Allocated', location: 'IT Dept - Floor 3', department: 'IT' },
@@ -193,7 +185,6 @@ const Assets = () => {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('authToken');
       const formData = new FormData();
       
       Object.keys(registrationForm).forEach(key => {
@@ -206,27 +197,17 @@ const Assets = () => {
         }
       });
 
-      const response = await fetch('/api/assets', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-
-      const result = await response.json();
+      const response = await createAsset(formData);
       
-      if (!result.error) {
+      if (response.data) {
         alert('Asset registered successfully!');
         setShowRegistrationPanel(false);
         resetRegistrationForm();
         fetchData();
-      } else {
-        alert(result.error.message);
       }
     } catch (error) {
-      console.error('Registration failed:', error);
-      alert('Asset registration simulated (backend not connected)');
-      setShowRegistrationPanel(false);
-      resetRegistrationForm();
+      console.error('Registration failed:', error.response?.data?.detail || error.message);
+      alert(error.response?.data?.detail || 'Asset registration failed');
     }
   };
 

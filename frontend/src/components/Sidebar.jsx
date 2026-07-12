@@ -29,7 +29,7 @@ const Sidebar = ({ user }) => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     navigate('/login');
   };
