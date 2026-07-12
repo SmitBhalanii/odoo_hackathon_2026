@@ -51,32 +51,52 @@ assetflow-erp/
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- Git
+### Quick Start (Recommended)
 
-### Backend Setup
-
+#### Backend Setup (5 minutes)
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Windows
+venv\Scripts\activate
+
+# Mac/Linux
+source venv/bin/activate
+
 pip install -r requirements.txt
-uvicorn main:app --reload
+python seed.py
+uvicorn app.main:app --reload
 ```
 
-Backend runs at: http://localhost:8000
+Backend runs at: **http://localhost:8000**
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
 
-### Frontend Setup
+**Demo Login Credentials:**
+- Admin: `admin@techcorp.com` / `admin123`
+- Manager: `manager@techcorp.com` / `manager123`
+- Employee: `john.doe@techcorp.com` / `password123`
 
+#### Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend runs at: http://localhost:3000
+Frontend runs at: **http://localhost:5173**
+
+### Detailed Documentation
+
+- **Backend**: See `backend/README.md` for complete technical docs
+- **Quick Start**: See `backend/QUICKSTART.md` for 5-minute guide
+- **Setup Complete**: See `BACKEND_SETUP_COMPLETE.md` for architecture overview
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- Git
 
 ## 👥 Team
 
@@ -145,14 +165,39 @@ All API responses follow this structure:
 
 ## 📋 Current Progress
 
+### ✅ Completed
 - [x] Project structure setup
+- [x] Frontend UI (Dashboard, Assets, Bookings, etc.)
 - [x] Login/Signup screen with dark mode design
 - [x] Git repository initialized
-- [ ] Backend authentication endpoints
-- [ ] Asset management system
-- [ ] Booking system
-- [ ] Maintenance workflows
+- [x] **Backend fully structured and documented**
+  - [x] FastAPI + SQLAlchemy 2.0 + SQLite setup
+  - [x] JWT authentication system
+  - [x] All 10+ database models
+  - [x] Role-based access control
+  - [x] Global exception handlers
+  - [x] Pagination support
+  - [x] CORS configuration
+  - [x] Timestamp mixin on all tables
+  - [x] Demo data seeding script
+  - [x] Comprehensive documentation
+
+### 🚧 In Progress
+- [ ] Complete CRUD endpoints for all entities
+- [ ] Asset lifecycle state machine implementation
+- [ ] Booking conflict detection
+- [ ] Maintenance approval workflows
+- [ ] Notification system
+- [ ] Activity logging
+- [ ] Frontend-backend integration
+
+### 📝 Planned
 - [ ] Audit cycle management
+- [ ] Report generation
+- [ ] File upload (asset photos)
+- [ ] QR code generation
+- [ ] Email notifications
+- [ ] Advanced search and filtering
 
 ## 🛠️ Development Guidelines
 

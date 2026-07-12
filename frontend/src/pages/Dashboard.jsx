@@ -14,7 +14,13 @@ import {
   AlertTriangle,
   Clock,
   User,
-  LogOut
+  LogOut,
+  Settings,
+  UserCog,
+  Shield,
+  FileText,
+  Download,
+  ChevronDown
 } from 'lucide-react';
 import { NotificationDropdown } from './Notifications';
 import { PageWrapper, ContentArea, CardSkeleton } from '../components/SharedComponents';
@@ -31,6 +37,7 @@ const Dashboard = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
 
   // Navigation items
   const navItems = [
@@ -66,11 +73,14 @@ const Dashboard = () => {
       if (showNotificationDropdown && !event.target.closest('.notification-dropdown-container')) {
         setShowNotificationDropdown(false);
       }
+      if (showAdminDropdown && !event.target.closest('.admin-dropdown-container')) {
+        setShowAdminDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotificationDropdown]);
+  }, [showNotificationDropdown, showAdminDropdown]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -230,6 +240,66 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const handleAdminMenuAction = (action) => {
+    setShowAdminDropdown(false);
+    
+    switch(action) {
+      case 'profile':
+        // Navigate to profile settings
+        navigate('/profile-settings');
+        break;
+      case 'organization':
+        navigate('/organization');
+        break;
+      case 'users':
+        // Navigate to user management
+        navigate('/users-management');
+        break;
+      case 'system':
+        // Navigate to system settings
+        navigate('/system-settings');
+        break;
+      case 'audit-logs':
+        navigate('/audit-logs');
+        break;
+      case 'export':
+        // Trigger export functionality
+        handleExportData();
+        break;
+      case 'logout':
+        handleLogout();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/export/dashboard-data', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `assetflow-data-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert('Export feature will be available soon!');
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export feature will be available soon!');
+    }
+  };
+
   const getInitials = (name) => {
     return name
       .split(' ')
@@ -366,17 +436,105 @@ const Dashboard = () => {
         {/* Topbar */}
         <header className={`bg-[#17171C] border-b border-[#2A2A32] px-${SPACING.md} py-${SPACING.xs}`}>
           <div className="flex items-center justify-end gap-4">
-            {/* User Avatar with Role */}
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-white text-sm font-medium">{user.name}</p>
-                <span className={`inline-block text-xs px-2 py-0.5 rounded border ${getRoleBadgeColor(user.role)}`}>
-                  {user.role}
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-2 ring-[#2A2A32]">
-                <span className="text-white text-sm font-semibold">{getInitials(user.name)}</span>
-              </div>
+            {/* User Avatar with Role and Dropdown */}
+            <div className="relative admin-dropdown-container">
+              <button
+                onClick={() => setShowAdminDropdown(!showAdminDropdown)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1F1F24] transition-colors duration-200"
+              >
+                <div className="text-right">
+                  <p className="text-white text-sm font-medium">{user.name}</p>
+                  <span className={`inline-block text-xs px-2 py-0.5 rounded border ${getRoleBadgeColor(user.role)}`}>
+                    {user.role}
+                  </span>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-2 ring-[#2A2A32]">
+                  <span className="text-white text-sm font-semibold">{getInitials(user.name)}</span>
+                </div>
+                <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${showAdminDropdown ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Admin Dropdown Menu */}
+              {showAdminDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#17171C] border border-[#2A2A32] rounded-lg shadow-2xl z-50">
+                  {/* User Info Section */}
+                  <div className="px-4 py-3 border-b border-[#2A2A32]">
+                    <p className="text-white text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-gray-400 text-xs truncate">{user.email}</p>
+                    <span className={`inline-block text-xs px-2 py-0.5 rounded border mt-2 ${getRoleBadgeColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-2">
+                    <button
+                      onClick={() => handleAdminMenuAction('profile')}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                    >
+                      <User size={18} />
+                      <span className="text-sm">Profile Settings</span>
+                    </button>
+
+                    {user.role === 'Admin' && (
+                      <>
+                        <button
+                          onClick={() => handleAdminMenuAction('organization')}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                        >
+                          <Building2 size={18} />
+                          <span className="text-sm">Organization Setup</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleAdminMenuAction('users')}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                        >
+                          <UserCog size={18} />
+                          <span className="text-sm">User Management</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleAdminMenuAction('system')}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                        >
+                          <Settings size={18} />
+                          <span className="text-sm">System Settings</span>
+                        </button>
+
+                        <div className="my-1 border-t border-[#2A2A32]"></div>
+
+                        <button
+                          onClick={() => handleAdminMenuAction('audit-logs')}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                        >
+                          <Shield size={18} />
+                          <span className="text-sm">Audit Logs</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleAdminMenuAction('export')}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#1F1F24] text-gray-300 hover:text-white transition-colors duration-150"
+                        >
+                          <Download size={18} />
+                          <span className="text-sm">Export Data</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Logout Section */}
+                  <div className="border-t border-[#2A2A32] py-2">
+                    <button
+                      onClick={() => handleAdminMenuAction('logout')}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors duration-150"
+                    >
+                      <LogOut size={18} />
+                      <span className="text-sm font-medium">Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Notification Bell */}

@@ -49,7 +49,13 @@ const Assets = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const assetStatuses = [
-    'Available', 'Allocated', 'Reserved', 'Under Maintenance', 'Lost', 'Retired', 'Disposed'
+    { value: 'Available', color: getStatusColor('Available') },
+    { value: 'Allocated', color: getStatusColor('Allocated') },
+    { value: 'Reserved', color: getStatusColor('Reserved') },
+    { value: 'Under Maintenance', color: getStatusColor('Under Maintenance') },
+    { value: 'Lost', color: getStatusColor('Lost') },
+    { value: 'Retired', color: getStatusColor('Retired') },
+    { value: 'Disposed', color: getStatusColor('Disposed') }
   ];
 
   useEffect(() => {
@@ -450,7 +456,7 @@ const Assets = () => {
               </table>
             )}
           </div>
-        </div>
+        </ContentArea>
       </main>
 
       {/* Registration Slide-Over Panel */}
@@ -685,7 +691,7 @@ const Assets = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageWrapper>
   );
 };
 
