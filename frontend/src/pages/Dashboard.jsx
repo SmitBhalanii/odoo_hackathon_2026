@@ -16,6 +16,7 @@ import {
   User,
   LogOut
 } from 'lucide-react';
+import { NotificationDropdown } from './Notifications';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [overdueCount, setOverdueCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
 
   // Navigation items
   const navItems = [
@@ -54,6 +57,18 @@ const Dashboard = () => {
     // Fetch dashboard data
     fetchDashboardData();
   }, [navigate]);
+
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotificationDropdown && !event.target.closest('.notification-dropdown-container')) {
+        setShowNotificationDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotificationDropdown]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -98,7 +113,7 @@ const Dashboard = () => {
         setRecentActivity(activityResult.data.items || []);
       }
 
-      // Fetch unread notifications count
+      // Fetch unread notifications count and recent notifications
       const notifResponse = await fetch('/api/notifications/unread-count', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -109,6 +124,18 @@ const Dashboard = () => {
       if (notifResult.data) {
         setUnreadNotifications(notifResult.data.count || 0);
       }
+
+      // Fetch recent notifications for dropdown
+      const recentNotifResponse = await fetch('/api/notifications?limit=5', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const recentNotifResult = await recentNotifResponse.json();
+      
+      if (recentNotifResult.data) {
+        setNotifications(recentNotifResult.data.items || []);
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
       // Use mock data as fallback on error
@@ -118,12 +145,81 @@ const Dashboard = () => {
         setOverdueCount(mockKpiData.data.overdueReturns || 0);
         setRecentActivity(mockRecentActivity.data.items || []);
         setUnreadNotifications(mockNotificationCount.data.count || 0);
+        
+        // Mock notifications for dropdown
+        setNotifications([
+          {
+            id: 1,
+            type: 'asset_assigned',
+            message: 'Laptop AF-0014 assigned to Priya Shah',
+            created_at: new Date(Date.now() - 2 * 60000).toISOString(),
+            read: false
+          },
+          {
+            id: 2,
+            type: 'maintenance_approved',
+            message: 'Maintenance request approved',
+            created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+            read: false
+          }
+        ]);
       } catch (mockError) {
         console.error('Failed to load mock data:', mockError);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRelativeTime = (timestamp) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - time) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds}s ago`;
+    }
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago`;
+  };
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await fetch(`/api/notifications/${notificationId}/mark-read`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      setNotifications(prev => prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      ));
+      
+      // Update unread count
+      setUnreadNotifications(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+      setNotifications(prev => prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      ));
+      setUnreadNotifications(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleViewAllNotifications = () => {
+    setShowNotificationDropdown(false);
+    navigate('/notifications');
   };
 
   const handleLogout = () => {
@@ -296,17 +392,31 @@ const Dashboard = () => {
             </div>
 
             {/* Notification Bell */}
-            <button
-              onClick={() => navigate('/notifications')}
-              className="relative p-2 bg-[#1F1F24] hover:bg-[#252529] rounded-lg transition"
-            >
-              <Bell size={20} className="text-gray-400" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                </span>
+            <div className="relative notification-dropdown-container">
+              <button
+                onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                className="relative p-2 bg-[#1F1F24] hover:bg-[#252529] rounded-lg transition"
+              >
+                <Bell size={20} className="text-gray-400" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotificationDropdown && (
+                <div className="absolute right-0 top-full mt-2 bg-[#17171C] border border-[#2A2A32] rounded-lg shadow-2xl z-50">
+                  <NotificationDropdown
+                    notifications={notifications}
+                    onMarkAsRead={markNotificationAsRead}
+                    onViewAll={handleViewAllNotifications}
+                    getRelativeTime={getRelativeTime}
+                  />
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </header>
 

@@ -12,6 +12,7 @@ import Booking from './pages/Booking'
 import Maintenance from './pages/Maintenance'
 import Audit from './pages/Audit'
 import Reports from './pages/Reports'
+import Notifications from './pages/Notifications'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -31,7 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/maintenance/new" element={<PlaceholderPage title="New Maintenance Request" description="Submit a maintenance request." />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/notifications" element={<PlaceholderPage title="Notifications" description="View all notifications." />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
